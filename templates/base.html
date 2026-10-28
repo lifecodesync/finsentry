@@ -3,59 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}FinSentry — Explainable Risk & Cash-Flow Analyzer{% endblock %}</title>
-    <!-- Modern Tailwind CSS via CDN -->
+    <title>{% block title %}FinSentry STS — Daily Safe-to-Spend Guard{% endblock %}</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
 
-    <!-- Top Navigation -->
-    <header class="bg-indigo-900 text-white shadow-md">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Top Navigation Header -->
+    <header class="bg-slate-900 text-white shadow-md border-b border-slate-800">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
-                <div class="flex items-center space-x-3">
-                    <span class="text-2xl font-black tracking-tight text-indigo-300">🛡️ FinSentry</span>
-                    <span class="text-xs bg-indigo-700 text-indigo-200 px-2 py-0.5 rounded-full font-medium">Explainable Fintech</span>
-                </div>
-                <nav class="flex space-x-1 sm:space-x-4 text-sm font-medium">
-                    <a href="{% url 'dashboard' %}" class="px-3 py-2 rounded-md hover:bg-indigo-800 transition">Dashboard</a>
-                    <a href="{% url 'upload_csv' %}" class="px-3 py-2 rounded-md hover:bg-indigo-800 transition">Upload CSV</a>
-                    <a href="{% url 'transactions' %}" class="px-3 py-2 rounded-md hover:bg-indigo-800 transition">Ledger</a>
-                    <a href="{% url 'anomalies' %}" class="px-3 py-2 rounded-md hover:bg-indigo-800 transition">Risk Flags</a>
-                    <a href="{% url 'settings' %}" class="px-3 py-2 rounded-md hover:bg-indigo-800 transition">Settings & Runway</a>
+                <!-- Brand / Logo -->
+                <a href="{% url 'dashboard' %}" class="flex items-center space-x-3">
+                    <span class="text-2xl font-black text-indigo-400">🛡️ FinSentry</span>
+                    <span class="text-[11px] bg-indigo-950 text-indigo-300 border border-indigo-700/50 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                        Safe-To-Spend
+                    </span>
+                </a>
+
+                <!-- Nav Links -->
+                <nav class="flex items-center space-x-2 sm:space-x-4 text-xs font-semibold">
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'dashboard' %}" class="px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-200 hover:text-white transition">Dashboard</a>
+                        <a href="{% url 'profile_setup' %}" class="px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-200 hover:text-white transition">⚙️ Financial Setup</a>
+                        <div class="h-4 w-px bg-slate-700 mx-1"></div>
+                        <span class="text-slate-400 hidden sm:inline">👤 {{ user.username }}</span>
+                        <a href="{% url 'logout' %}" class="px-3 py-1.5 bg-rose-600/90 hover:bg-rose-600 text-white rounded-lg transition">Logout</a>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-200 hover:text-white transition">Login</a>
+                        <a href="{% url 'register' %}" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition shadow-sm font-bold">Sign Up</a>
+                    {% endif %}
                 </nav>
             </div>
         </div>
     </header>
 
-    <!-- Flash Messages -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 w-full">
+    <!-- Global Alert Messages -->
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 w-full">
         {% if messages %}
             {% for message in messages %}
-                <div class="p-4 mb-3 rounded-lg text-sm flex items-center justify-between 
-                    {% if message.tags == 'success' %}bg-emerald-100 text-emerald-800 border border-emerald-200
-                    {% elif message.tags == 'error' %}bg-rose-100 text-rose-800 border border-rose-200
-                    {% else %}bg-blue-100 text-blue-800 border border-blue-200{% endif %}">
+                <div class="p-3.5 mb-3 rounded-xl text-xs font-medium flex items-center justify-between shadow-sm
+                    {% if message.tags == 'success' %}bg-emerald-50 text-emerald-800 border border-emerald-200
+                    {% elif message.tags == 'error' %}bg-rose-50 text-rose-800 border border-rose-200
+                    {% else %}bg-indigo-50 text-indigo-800 border border-indigo-200{% endif %}">
                     <span>{{ message }}</span>
                 </div>
             {% endfor %}
         {% endif %}
     </div>
 
-    <!-- Main Page Content -->
-    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full">
+    <!-- Main Content Area -->
+    <main class="flex-grow max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full">
         {% block content %}{% endblock %}
     </main>
 
     <!-- Footer -->
-    <footer class="bg-white border-t border-slate-200 py-6 mt-12 text-center text-xs text-slate-500">
-        <div class="max-w-7xl mx-auto px-4">
-            <p class="font-semibold text-slate-700">FinSentry — Explainable Transaction Risk & Cash-Flow Analyzer</p>
-            <p class="mt-1">Architected with pure Python domain rules, Django 6, Pandas, Matplotlib, and SQLite. Zero external API leaks.</p>
+    <footer class="bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-500 mt-auto">
+        <div class="max-w-6xl mx-auto px-4">
+            <p class="font-bold text-slate-700">FinSentry Safe-To-Spend (STS) — Financial Runway & Daily Budget Engine</p>
+            <p class="mt-1">Architected with Python, Django 6, and SQLite. Zero Firebase. Zero external cloud leaks.</p>
         </div>
     </footer>
 

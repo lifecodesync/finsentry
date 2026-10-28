@@ -1,6 +1,6 @@
 """
 analyzer/urls.py
-Route declarations for FinSentry.
+Route declarations for FinSentry Safe-to-Spend (STS) web application.
 """
 
 from django.urls import path
@@ -8,11 +8,10 @@ from analyzer import views
 
 urlpatterns = [
     path("", views.dashboard_view, name="dashboard"),
-    path("upload/", views.upload_csv_view, name="upload_csv"),
-    path("transactions/", views.transactions_view, name="transactions"),
-    path("transactions/<str:txn_id>/override/", views.override_category_view, name="override_category"),
-    path("anomalies/", views.anomalies_view, name="anomalies"),
-    path("anomalies/<str:flag_id>/dismiss/", views.dismiss_flag_view, name="dismiss_flag"),
-    path("settings/", views.settings_view, name="settings"),
-    path("clear-data/", views.clear_data_view, name="clear_data"),
+    path("login/", views.login_view, name="login"),
+    path("register/", views.register_view, name="register"),
+    path("logout/", views.logout_view, name="logout"),
+    path("setup/", views.profile_setup_view, name="profile_setup"),
+    path("spend/", views.log_spend_view, name="log_spend"),
+    path("toggle/<str:bill_type>/", views.toggle_obligation_view, name="toggle_obligation"),
 ]

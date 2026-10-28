@@ -3,198 +3,253 @@
 {% block content %}
 <div class="space-y-6">
 
-    <!-- Top Headline & Actions -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-slate-200">
+    <!-- Top Headline -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-3 border-b border-slate-200">
         <div>
-            <h1 class="text-2xl font-bold text-slate-800">Financial Overview & Risk Center</h1>
-            <p class="text-sm text-slate-500 mt-1">Autonomous explainable analytics from local transaction records.</p>
+            <h1 class="text-2xl font-bold text-slate-800">Daily Safe-To-Spend Dashboard</h1>
+            <p class="text-xs text-slate-500 mt-0.5">Real-time financial guard powered by the Livia STS algorithm.</p>
         </div>
-        <div class="mt-4 sm:mt-0 flex items-center space-x-3">
-            <a href="{% url 'upload_csv' %}" class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg shadow-sm transition">
-                📥 Upload New CSV
+        <div class="mt-3 sm:mt-0 flex items-center space-x-2">
+            <a href="{% url 'profile_setup' %}" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-xl text-xs font-semibold transition">
+                ⚙️ Update Balance & Bills
             </a>
-            {% if total_transactions_count > 0 %}
-            <a href="{% url 'anomalies' %}" class="inline-flex items-center px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-sm font-medium rounded-lg transition">
-                ⚠️ Flags ({{ active_flags_count }})
-            </a>
-            <form method="POST" action="{% url 'clear_data' %}" onsubmit="return confirm('Clear all imported transactions and start fresh?');" class="inline">
+        </div>
+    </div>
+
+    <!-- HERO CARD: Daily Safe-To-Spend -->
+    <div class="p-6 sm:p-8 rounded-3xl border shadow-sm transition 
+        {% if sts.status == 'HEALTHY' %}bg-emerald-50/60 border-emerald-200 text-emerald-950
+        {% elif sts.status == 'TIGHT' %}bg-amber-50/60 border-amber-200 text-amber-950
+        {% else %}bg-rose-50/60 border-rose-200 text-rose-950{% endif %}">
+        
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div class="space-y-2">
+                <div class="flex items-center space-x-2">
+                    <span class="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full 
+                        {% if sts.status == 'HEALTHY' %}bg-emerald-200/80 text-emerald-800
+                        {% elif sts.status == 'TIGHT' %}bg-amber-200/80 text-amber-800
+                        {% else %}bg-rose-200/80 text-rose-800{% endif %}">
+                        {{ sts.status }} RUNWAY
+                    </span>
+                    <span class="text-xs font-medium text-slate-500">• {{ sts.days_remaining }} days until next salary</span>
+                </div>
+
+                <p class="text-xs text-slate-500 font-semibold uppercase tracking-wider">Today's Safe-to-Spend Ceiling</p>
+                
+                <div class="flex items-baseline space-x-3">
+                    <span class="text-4xl sm:text-5xl font-black tracking-tight 
+                        {% if sts.status == 'HEALTHY' %}text-emerald-700
+                        {% elif sts.status == 'TIGHT' %}text-amber-700
+                        {% else %}text-rose-700{% endif %}">
+                        ₹{{ sts.daily_sts }}
+                    </span>
+                    <span class="text-sm font-semibold text-slate-500">/ day</span>
+                </div>
+
+                <p class="text-xs text-slate-600 max-w-lg leading-relaxed pt-1">
+                    {{ sts.status_message }}
+                </p>
+            </div>
+
+            <!-- Mini Summary Stats -->
+            <div class="grid grid-cols-2 gap-3 sm:gap-4 md:border-l border-slate-200/80 md:pl-6 text-xs">
+                <div class="bg-white/80 p-3.5 rounded-xl border border-slate-200 shadow-sm">
+                    <p class="text-slate-400 font-medium">Weekly Spendable</p>
+                    <p class="text-lg font-bold text-slate-800 mt-0.5">₹{{ sts.weekly_sts }}</p>
+                </div>
+
+                <div class="bg-white/80 p-3.5 rounded-xl border border-slate-200 shadow-sm">
+                    <p class="text-slate-400 font-medium">Cycle Spendable Pool</p>
+                    <p class="text-lg font-bold text-slate-800 mt-0.5">₹{{ sts.spendable_balance }}</p>
+                </div>
+
+                <div class="bg-white/80 p-3.5 rounded-xl border border-slate-200 shadow-sm">
+                    <p class="text-slate-400 font-medium">Spent Today</p>
+                    <p class="text-lg font-bold text-rose-600 mt-0.5">₹{{ spent_today }}</p>
+                </div>
+
+                <div class="bg-white/80 p-3.5 rounded-xl border border-slate-200 shadow-sm">
+                    <p class="text-slate-400 font-medium">Remaining Today</p>
+                    <p class="text-lg font-bold text-emerald-600 mt-0.5">₹{{ remaining_today }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION: Fixed Obligations Quick Status & Toggle -->
+    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+        <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Fixed Monthly Obligations Status</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+            <!-- Rent Box -->
+            <div class="flex items-center justify-between p-3.5 rounded-xl border {% if profile.rent_is_paid %}bg-slate-50 border-slate-200{% else %}bg-amber-50/50 border-amber-200{% endif %}">
+                <div>
+                    <p class="font-bold text-slate-800">Monthly Rent: ₹{{ profile.rent_amount }}</p>
+                    <p class="text-[11px] text-slate-500 mt-0.5">
+                        Status: <strong class="{% if profile.rent_is_paid %}text-emerald-600{% else %}text-amber-700{% endif %}">
+                            {% if profile.rent_is_paid %}✅ Already Paid{% else %}⏳ Unpaid (₹{{ profile.rent_amount }} reserved){% endif %}
+                        </strong>
+                    </p>
+                </div>
+                <form method="POST" action="{% url 'toggle_obligation' 'rent' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="px-3 py-1.5 rounded-lg font-semibold text-[11px] border shadow-sm transition
+                        {% if profile.rent_is_paid %}bg-slate-200 text-slate-700 hover:bg-slate-300
+                        {% else %}bg-emerald-600 text-white hover:bg-emerald-700{% endif %}">
+                        {% if profile.rent_is_paid %}Mark Unpaid{% else %}Mark as Paid{% endif %}
+                    </button>
+                </form>
+            </div>
+
+            <!-- EMI Box -->
+            <div class="flex items-center justify-between p-3.5 rounded-xl border {% if profile.emi_is_paid %}bg-slate-50 border-slate-200{% else %}bg-amber-50/50 border-amber-200{% endif %}">
+                <div>
+                    <p class="font-bold text-slate-800">Monthly EMI: ₹{{ profile.emi_amount }}</p>
+                    <p class="text-[11px] text-slate-500 mt-0.5">
+                        Status: <strong class="{% if profile.emi_is_paid %}text-emerald-600{% else %}text-amber-700{% endif %}">
+                            {% if profile.emi_is_paid %}✅ Already Paid{% else %}⏳ Unpaid (₹{{ profile.emi_amount }} reserved){% endif %}
+                        </strong>
+                    </p>
+                </div>
+                <form method="POST" action="{% url 'toggle_obligation' 'emi' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="px-3 py-1.5 rounded-lg font-semibold text-[11px] border shadow-sm transition
+                        {% if profile.emi_is_paid %}bg-slate-200 text-slate-700 hover:bg-slate-300
+                        {% else %}bg-emerald-600 text-white hover:bg-emerald-700{% endif %}">
+                        {% if profile.emi_is_paid %}Mark Unpaid{% else %}Mark as Paid{% endif %}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- TWO COLUMN: Quick Spend Logger & Check Before You Buy Simulator -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- Column A: Log Today's Spend -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+            <div>
+                <h3 class="text-base font-bold text-slate-800">Log an Expense Today</h3>
+                <p class="text-xs text-slate-500 mt-0.5">Subtract spending as it happens. Deducts from your live bank balance.</p>
+            </div>
+
+            <form method="POST" action="{% url 'log_spend' %}" class="space-y-3 text-xs">
                 {% csrf_token %}
-                <button type="submit" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold rounded-lg border border-slate-300 transition">
-                    🗑️ Reset Data
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Expense Description</label>
+                    {{ spend_form.description }}
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Amount Spent (₹)</label>
+                    {{ spend_form.amount }}
+                </div>
+                <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-sm transition">
+                    Log Expense & Deduct &rarr;
                 </button>
             </form>
-            {% endif %}
-        </div>
-    </div>
 
-    {% if total_transactions_count == 0 %}
-    <!-- EMPTY STATE: Shown when no CSV has been uploaded yet -->
-    <div class="bg-white rounded-2xl border-2 border-dashed border-slate-300 p-12 text-center max-w-2xl mx-auto my-8">
-        <div class="text-5xl mb-4">📊</div>
-        <h2 class="text-xl font-bold text-slate-800">No Transactions Ingested Yet</h2>
-        <p class="text-sm text-slate-500 mt-2 max-w-md mx-auto leading-relaxed">
-            Your database is currently empty. Upload a bank statement or synthetic CSV to trigger validation, categorization, risk flags, and cash-flow analytics.
-        </p>
-        <div class="mt-6 flex justify-center space-x-3">
-            <a href="{% url 'upload_csv' %}" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm rounded-xl shadow-md transition">
-                Upload Your First CSV &rarr;
-            </a>
-        </div>
-        <p class="text-xs text-slate-400 mt-4">
-            Sample file available at: <code class="bg-slate-100 px-2 py-1 rounded text-slate-700 font-mono">data/sample_transactions.csv</code>
-        </p>
-    </div>
-
-    {% else %}
-    <!-- ACTIVE STATE: Shown when transactions exist in database -->
-
-    <!-- Runway Projection Warning Banner -->
-    {% if runway.will_breach_threshold %}
-    <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-lg shadow-sm">
-        <div class="flex items-start">
-            <span class="text-2xl mr-3">🚨</span>
-            <div>
-                <h4 class="text-sm font-bold text-amber-900">Projected Cash-Flow Warning (30-Day Runway Alert)</h4>
-                <p class="text-xs text-amber-800 mt-1 leading-relaxed">{{ runway.assumptions_explained }}</p>
-                <p class="text-xs italic text-amber-700 mt-1">{{ runway.disclaimer }}</p>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- Top Key Metrics Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Inflow (Income)</p>
-            <p class="text-2xl font-black text-emerald-600 mt-1">₹{{ summary.total_income }}</p>
-            <p class="text-xs text-slate-500 mt-2">Active non-duplicate credits</p>
-        </div>
-
-        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Outflow (Expenses)</p>
-            <p class="text-2xl font-black text-rose-600 mt-1">₹{{ summary.total_expenses }}</p>
-            <p class="text-xs text-slate-500 mt-2">Active non-duplicate debits</p>
-        </div>
-
-        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Net Cash Flow</p>
-            <p class="text-2xl font-black {% if summary.net_savings >= 0 %}text-emerald-700{% else %}text-rose-700{% endif %} mt-1">
-                ₹{{ summary.net_savings }}
-            </p>
-            <p class="text-xs text-slate-500 mt-2">Inflow minus Outflow</p>
-        </div>
-
-        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Net Savings Rate</p>
-            <p class="text-2xl font-black text-indigo-600 mt-1">{{ summary.savings_rate_pct }}%</p>
-            <p class="text-xs text-slate-500 mt-2">Proportion of income retained</p>
-        </div>
-    </div>
-
-    <!-- Charts Section -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Category Distribution Chart -->
-        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-            <h3 class="text-base font-bold text-slate-800 mb-3">Spending Breakdown by Category</h3>
-            {% if pie_chart %}
-                <img src="data:image/png;base64,{{ pie_chart }}" alt="Expense Category Pie Chart" class="mx-auto rounded-lg max-h-80 w-auto">
-            {% else %}
-                <div class="py-16 text-center text-slate-400 text-sm">
-                    No expense transactions found.
-                </div>
-            {% endif %}
-        </div>
-
-        <!-- Monthly Trends Chart -->
-        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-            <h3 class="text-base font-bold text-slate-800 mb-3">Monthly Cash Inflows vs Outflows</h3>
-            {% if bar_chart %}
-                <img src="data:image/png;base64,{{ bar_chart }}" alt="Monthly Trends Bar Chart" class="mx-auto rounded-lg max-h-80 w-auto">
-            {% else %}
-                <div class="py-16 text-center text-slate-400 text-sm">
-                    No monthly data found.
-                </div>
-            {% endif %}
-        </div>
-    </div>
-
-    <!-- Detected Recurring Subscriptions -->
-    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-        <div class="flex items-center justify-between mb-4">
-            <div>
-                <h3 class="text-base font-bold text-slate-800">Detected Recurring Payments & Subscriptions</h3>
-                <p class="text-xs text-slate-500">Derived through automated cadence variance detection across transaction dates.</p>
-            </div>
-            <span class="text-xs bg-slate-100 text-slate-700 px-2.5 py-1 rounded font-semibold">{{ recurring_payments|length }} Identified</span>
-        </div>
-
-        {% if recurring_payments %}
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {% for item in recurring_payments %}
-            <div class="border border-slate-200 p-4 rounded-lg bg-slate-50">
-                <div class="flex justify-between items-start">
-                    <h4 class="font-bold text-slate-800 text-sm">{{ item.merchant }}</h4>
-                    <span class="text-xs px-2 py-0.5 rounded font-bold 
-                        {% if item.cadence == 'MONTHLY' %}bg-purple-100 text-purple-700
-                        {% elif item.cadence == 'WEEKLY' %}bg-sky-100 text-sky-700
-                        {% else %}bg-slate-200 text-slate-700{% endif %}">
-                        {{ item.cadence }}
-                    </span>
-                </div>
-                <p class="text-lg font-bold text-slate-900 mt-2">₹{{ item.average_amount }} <span class="text-xs font-normal text-slate-500">/ avg</span></p>
-                <p class="text-xs text-slate-600 mt-1 leading-snug">{{ item.explanation }}</p>
-                <div class="mt-3 pt-2 border-t border-slate-200 text-xs flex justify-between text-slate-500">
-                    <span>Confidence: <strong>{{ item.confidence_score|floatformat:2 }}</strong></span>
-                    <span>Next: <strong>{{ item.next_expected_date|default:"TBD" }}</strong></span>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        {% else %}
-        <p class="text-xs text-slate-500 py-4 text-center">No recurring patterns detected yet.</p>
-        {% endif %}
-    </div>
-
-    <!-- Recent Transactions Preview -->
-    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-        <div class="flex items-center justify-between mb-4">
-            <h3 class="text-base font-bold text-slate-800">Recent Ingested Transactions</h3>
-            <a href="{% url 'transactions' %}" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800">View Full Ledger ({{ total_transactions_count }}) &rarr;</a>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
-                <thead>
-                    <tr class="bg-slate-100 text-slate-600 uppercase font-semibold">
-                        <th class="py-2.5 px-3 rounded-l">Date</th>
-                        <th class="py-2.5 px-3">Description</th>
-                        <th class="py-2.5 px-3">Category</th>
-                        <th class="py-2.5 px-3">Type</th>
-                        <th class="py-2.5 px-3 text-right rounded-r">Amount</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100">
-                    {% for txn in recent_transactions %}
-                    <tr class="hover:bg-slate-50">
-                        <td class="py-2.5 px-3 font-medium text-slate-700">{{ txn.date }}</td>
-                        <td class="py-2.5 px-3 font-semibold text-slate-900">{{ txn.description }}</td>
-                        <td class="py-2.5 px-3">
-                            <span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-xs">{{ txn.category }}</span>
-                        </td>
-                        <td class="py-2.5 px-3">
-                            <span class="px-2 py-0.5 rounded text-xs font-bold {% if txn.type == 'INCOME' %}bg-emerald-100 text-emerald-800{% else %}bg-rose-100 text-rose-800{% endif %}">
-                                {{ txn.type }}
-                            </span>
-                        </td>
-                        <td class="py-2.5 px-3 text-right font-bold {% if txn.type == 'INCOME' %}text-emerald-600{% else %}text-slate-900{% endif %}">
-                            ₹{{ txn.amount }}
-                        </td>
-                    </tr>
+            <!-- Today's Spend Log -->
+            <div class="pt-3 border-t border-slate-100">
+                <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Today's Transactions</p>
+                <div class="space-y-1.5 max-h-36 overflow-y-auto text-xs">
+                    {% for s in todays_spends %}
+                    <div class="flex justify-between items-center py-1.5 px-2.5 bg-slate-50 rounded-lg">
+                        <span class="text-slate-700 font-medium">{{ s.description }}</span>
+                        <span class="font-bold text-rose-600">-₹{{ s.amount }}</span>
+                    </div>
+                    {% empty %}
+                    <p class="text-slate-400 text-xs py-2 text-center">No expenses logged yet today.</p>
                     {% endfor %}
-                </tbody>
-            </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Column B: "Check Before You Buy" Simulator (Livia feature) -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+            <div>
+                <div class="flex items-center space-x-2">
+                    <span class="text-lg">🛒</span>
+                    <h3 class="text-base font-bold text-slate-800">Check Before You Buy</h3>
+                </div>
+                <p class="text-xs text-slate-500 mt-0.5">Considering a purchase? Test whether you can afford it without touching protected reserves.</p>
+            </div>
+
+            <form method="POST" class="space-y-3 text-xs">
+                {% csrf_token %}
+                <input type="hidden" name="check_buy" value="1">
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">What are you planning to buy?</label>
+                    <input type="text" name="item_name" placeholder="e.g. Headphones, Dinner party, Shoes" required
+                           class="w-full border border-slate-300 rounded-lg p-2 text-sm">
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Item Cost (₹)</label>
+                    <input type="number" step="0.01" name="item_cost" placeholder="e.g. 2500.00" required
+                           class="w-full border border-slate-300 rounded-lg p-2 text-sm font-semibold">
+                </div>
+                <button type="submit" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl shadow-sm transition">
+                    Simulate Purchase Impact &rarr;
+                </button>
+            </form>
+
+            <!-- Simulation Result Box -->
+            {% if simulation %}
+            <div class="p-3.5 rounded-xl border text-xs space-y-1 
+                {% if simulation.can_afford %}bg-emerald-50 border-emerald-200 text-emerald-900
+                {% else %}bg-rose-50 border-rose-200 text-rose-900{% endif %}">
+                <p class="font-bold text-sm">
+                    {% if simulation.can_afford %}✅ Purchase Approved (Within Budget){% else %}⛔ High Risk Warning{% endif %}
+                </p>
+                <p class="leading-relaxed">{{ simulation.explanation }}</p>
+                {% if simulation.can_afford and simulation.daily_drop %}
+                <p class="pt-1 text-[11px] opacity-80">
+                    Daily budget impact: Drops by ₹{{ simulation.daily_drop }} per day.
+                </p>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+    </div>
+
+    <!-- THE PROTECTION RESERVOIR (How the formula works) -->
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+        <div>
+            <h3 class="text-base font-bold text-slate-800">The Money Reservoir: How Safe-To-Spend is Calculated</h3>
+            <p class="text-xs text-slate-500">Transparent mathematical breakdown based on your active bank balance and locked pools.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-3 text-center text-xs">
+            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <p class="text-slate-400 font-medium">1. Bank Balance</p>
+                <p class="text-base font-black text-slate-800 mt-1">₹{{ sts.available_balance }}</p>
+                <p class="text-[10px] text-slate-400 mt-1">Total liquid money</p>
+            </div>
+
+            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <p class="text-rose-600 font-medium">2. Less: Unpaid Fixed</p>
+                <p class="text-base font-black text-rose-600 mt-1">-₹{{ sts.unpaid_rent|add:sts.unpaid_emi }}</p>
+                <p class="text-[10px] text-slate-400 mt-1">Rent + EMI obligations</p>
+            </div>
+
+            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <p class="text-amber-600 font-medium">3. Less: Protected Pools</p>
+                <p class="text-base font-black text-amber-600 mt-1">-₹{{ sts.emergency_alloc|add:sts.savings_alloc|add:sts.goal_contribution }}</p>
+                <p class="text-[10px] text-slate-400 mt-1">Emergency, Savings & Goal</p>
+            </div>
+
+            <div class="p-3 bg-indigo-50 rounded-xl border border-indigo-200">
+                <p class="text-indigo-800 font-bold">4. Spendable Pool</p>
+                <p class="text-base font-black text-indigo-700 mt-1">₹{{ sts.spendable_balance }}</p>
+                <p class="text-[10px] text-indigo-600 mt-1">Left to spend safely</p>
+            </div>
+
+            <div class="p-3 bg-emerald-50 rounded-xl border border-emerald-200">
+                <p class="text-emerald-800 font-bold">5. Daily Safe Spend</p>
+                <p class="text-base font-black text-emerald-700 mt-1">₹{{ sts.daily_sts }}</p>
+                <p class="text-[10px] text-emerald-600 mt-1">Spread over {{ sts.days_remaining }} days</p>
+            </div>
         </div>
     </div>
-    {% endif %}
 
 </div>
 {% endblock %}

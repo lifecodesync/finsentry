@@ -1,63 +1,70 @@
 """
 analyzer/tests.py
-Integration and Web View Tests for FinSentry.
+Django web integration tests for the FinSentry Safe-to-Spend website.
 """
 
 from decimal import Decimal
-import io
 from django.test import TestCase, Client
 from django.urls import reverse
+from django.contrib.auth.models import User
 
-from analyzer.models import StoredTransaction, StoredAnomalyFlag, AppSettings
+from analyzer.models import UserFinancialProfile, DailySpendEntry
 
 
 class FinSentryWebTests(TestCase):
     def setUp(self):
         self.client = Client()
-        self.settings = AppSettings.get_settings()
-        self.txn = StoredTransaction.objects.create(
-            txn_id="TXN-TEST-1",
-            date="2026-10-01",
-            description="Test Grocery Store",
-            amount=Decimal("1500.00"),
-            type="EXPENSE",
-            category="Groceries & Essentials",
-            category_reason="Matched keyword 'grocery'"
+        self.user = User.objects.create_user(username="testuser", password="password123")
+        self.profile = UserFinancialProfile.objects.create(
+            user=self.user,
+            monthly_salary=Decimal("60000.00"),
+            salary_day=1,
+            available_balance=Decimal("30000.00"),
+            rent_amount=Decimal("10000.00"),
+            rent_is_paid=False,
+            emi_amount=Decimal("4000.00"),
+            emi_is_paid=False,
+            emergency_pool=Decimal("5000.00"),
+            savings_pool=Decimal("3000.00"),
+            goal_monthly_contribution=Decimal("2000.00"),
         )
 
-    def test_dashboard_status_code(self):
+    def test_unauthenticated_redirect_to_login(self):
+        response = self.client.get(reverse("dashboard"))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("login", response.url)
+
+    def test_authenticated_dashboard(self):
+        self.client.login(username="testuser", password="password123")
         response = self.client.get(reverse("dashboard"))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Test Grocery Store")
-        self.assertContains(response, "Financial Overview")
+        self.assertContains(response, "Today's Safe-to-Spend Ceiling")
+        self.assertContains(response, "The Money Reservoir")
 
-    def test_transactions_view(self):
-        response = self.client.get(reverse("transactions"))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Test Grocery Store")
-
-    def test_upload_csv_view_get(self):
-        response = self.client.get(reverse("upload_csv"))
-        self.assertEqual(response.status_code, 200)
-
-    def test_upload_csv_post(self):
-        csv_data = (
-            "date,description,amount,type\n"
-            "2026-10-15,New Salary,80000.00,INCOME\n"
-        )
-        csv_file = io.BytesIO(csv_data.encode("utf-8"))
-        csv_file.name = "upload_test.csv"
-
-        response = self.client.post(reverse("upload_csv"), {"csv_file": csv_file})
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(StoredTransaction.objects.filter(description="New Salary").exists())
-
-    def test_override_category(self):
+    def test_log_spend_view(self):
+        self.client.login(username="testuser", password="password123")
         response = self.client.post(
-            reverse("override_category", kwargs={"txn_id": self.txn.txn_id}),
-            {"category": "Special Expense", "note": "Manual review"}
+            reverse("log_spend"),
+            {"description": "Office Lunch", "amount": "250.00"}
         )
-        self.assertEqual(response.status_code, 302)  # Redirects back to ledger
-        self.txn.refresh_from_db()
-        self.assertEqual(self.txn.category, "Special Expense")
-        self.assertIn("User override", self.txn.category_reason)
+        self.assertEqual(response.status_code, 302)  # Redirects back to dashboard
+        self.assertTrue(DailySpendEntry.objects.filter(description="Office Lunch").exists())
+        self.profile.refresh_from_db()
+        self.assertEqual(self.profile.available_balance, Decimal("29750.00"))  # 30000 - 250
+
+    def test_toggle_obligation(self):
+        self.client.login(username="testuser", password="password123")
+        self.assertFalse(self.profile.rent_is_paid)
+        response = self.client.post(reverse("toggle_obligation", kwargs={"bill_type": "rent"}))
+        self.assertEqual(response.status_code, 302)
+        self.profile.refresh_from_db()
+        self.assertTrue(self.profile.rent_is_paid)
+
+    def test_check_before_you_buy_simulator(self):
+        self.client.login(username="testuser", password="password123")
+        response = self.client.post(
+            reverse("dashboard"),
+            {"check_buy": "1", "item_name": "Book", "item_cost": "500.00"}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Purchase Approved")
