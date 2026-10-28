@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-8">
+
+    <!-- Header -->
+    <div class="pb-4 border-b border-slate-200">
+        <h1 class="text-2xl font-bold text-slate-800">Settings & Cash-Flow Runway Simulation</h1>
+        <p class="text-sm text-slate-500 mt-1">Configure risk multipliers, liquidity thresholds, and project future cash-flow health.</p>
+    </div>
+
+    <!-- Configuration Form -->
+    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+        <h2 class="text-base font-bold text-slate-800">Global Risk & Liquidity Parameters</h2>
+        <form method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="save_settings">
+
+            <div>
+                <label class="block font-semibold text-slate-700 mb-1">Current Bank Balance Baseline (₹)</label>
+                <input type="number" step="0.01" name="starting_balance" value="{{ settings.starting_balance }}" required
+                       class="w-full border border-slate-300 rounded-lg p-2.5 text-sm font-semibold">
+                <p class="text-slate-400 mt-1">Your liquid reserve used to evaluate cash runway.</p>
+            </div>
+
+            <div>
+                <label class="block font-semibold text-slate-700 mb-1">Safety Threshold Limit (₹)</label>
+                <input type="number" step="0.01" name="threshold_limit" value="{{ settings.threshold_limit }}" required
+                       class="w-full border border-slate-300 rounded-lg p-2.5 text-sm font-semibold">
+                <p class="text-slate-400 mt-1">Minimum safety balance; breaches trigger runway alerts.</p>
+            </div>
+
+            <div>
+                <label class="block font-semibold text-slate-700 mb-1">Baseline Spike Multiplier</label>
+                <input type="number" step="0.1" name="baseline_spike_multiplier" value="{{ settings.baseline_spike_multiplier }}" required
+                       class="w-full border border-slate-300 rounded-lg p-2.5 text-sm font-semibold">
+                <p class="text-slate-400 mt-1">Multiple of category mean spend that triggers a spike flag (Default: 2.5x).</p>
+            </div>
+
+            <div>
+                <label class="block font-semibold text-slate-700 mb-1">Estimated Daily Discretionary Burn (₹)</label>
+                <input type="number" step="0.01" name="daily_discretionary_burn" value="{{ settings.daily_discretionary_burn }}" required
+                       class="w-full border border-slate-300 rounded-lg p-2.5 text-sm font-semibold">
+                <p class="text-slate-400 mt-1">Daily non-fixed baseline spend used in 30-day forward projections.</p>
+            </div>
+
+            <div class="md:col-span-2 pt-2 flex justify-end">
+                <button type="submit" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg shadow-sm transition">
+                    Save Parameters
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Feature F: Interactive Runway Simulation -->
+    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
+        <div>
+            <h2 class="text-base font-bold text-slate-800">30-Day Cash-Flow Runway Simulator</h2>
+            <p class="text-xs text-slate-500 mt-1">
+                Simulate whether upcoming scheduled bills (e.g. Rent, College Fees, EMIs) will cause your balance to breach your safety threshold within 30 days.
+            </p>
+        </div>
+
+        <form method="POST" class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs bg-slate-50 p-4 rounded-lg border border-slate-200">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="run_simulation">
+
+            <div>
+                <label class="block font-medium text-slate-700 mb-1">Upcoming Obligation Description</label>
+                <input type="text" name="ob_desc" placeholder="e.g. Semester Fee / Rent" required
+                       class="w-full border border-slate-300 rounded p-2 text-xs">
+            </div>
+
+            <div>
+                <label class="block font-medium text-slate-700 mb-1">Obligation Amount (₹)</label>
+                <input type="number" step="0.01" name="ob_amt" placeholder="e.g. 25000.00" required
+                       class="w-full border border-slate-300 rounded p-2 text-xs font-semibold">
+            </div>
+
+            <div>
+                <label class="block font-medium text-slate-700 mb-1">Due In (Days from today)</label>
+                <input type="number" name="ob_days" value="15" required
+                       class="w-full border border-slate-300 rounded p-2 text-xs">
+            </div>
+
+            <div class="md:col-span-3 pt-2 flex justify-end">
+                <button type="submit" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-semibold rounded text-xs transition">
+                    Run Projection Forecast &rarr;
+                </button>
+            </div>
+        </form>
+
+        <!-- Simulation Result Output -->
+        {% if simulation %}
+        <div class="p-4 rounded-xl border {% if simulation.will_breach_threshold %}bg-rose-50 border-rose-200 text-rose-900{% else %}bg-emerald-50 border-emerald-200 text-emerald-900{% endif %}">
+            <div class="flex items-start space-x-3">
+                <span class="text-2xl">{% if simulation.will_breach_threshold %}⚠️{% else %}✅{% endif %}</span>
+                <div class="space-y-1 text-xs">
+                    <h3 class="text-sm font-bold">
+                        {% if simulation.will_breach_threshold %}
+                        High Risk: Threshold Breach Projected!
+                        {% else %}
+                        Safe Cash-Flow Runway Projected
+                        {% endif %}
+                    </h3>
+                    <p class="leading-relaxed">{{ simulation.assumptions_explained }}</p>
+                    <p class="pt-1 text-[11px] font-semibold">
+                        Lowest Estimated Balance in 30 Days: <strong>₹{{ simulation.projected_lowest_balance }}</strong> 
+                        (Threshold: ₹{{ simulation.threshold_limit }})
+                    </p>
+                    <p class="pt-2 text-[10px] italic opacity-80">{{ simulation.disclaimer }}</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

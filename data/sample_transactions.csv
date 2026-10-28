@@ -1,0 +1,21 @@
+﻿date,description,amount,type
+2026-10-01,Monthly Salary,75000.00,INCOME
+2026-10-02,Supermarket Groceries,3200.50,EXPENSE
+2026-10-03,Netflix Subscription,649.00,EXPENSE
+2026-10-05,Electricity Bill,1850.00,EXPENSE
+2026-10-07,Freelance Consulting,15000.00,INCOME
+2026-10-10,Amazon Order Electronics,4599.00,EXPENSE
+2026-10-12,Gym Membership,2500.00,EXPENSE
+2026-10-15,Restaurant Dinner,1250.00,EXPENSE
+2026-10-15,Restaurant Dinner,1250.00,EXPENSE
+2026-10-18,Uber Ride,340.00,EXPENSE
+2026-10-20,SIP Mutual Fund,10000.00,EXPENSE
+2026-10-22,WiFi Internet Bill,999.00,EXPENSE
+2026-10-25,Spotify Subscription,119.00,EXPENSE
+2026-10-27,ATM Cash Withdrawal,5000.00,EXPENSE
+2026-10-28,Interest Credit,420.00,INCOME
+2026-10-32,Invalid Day Date,500.00,EXPENSE
+2026-10-29,Negative Amount Test,-200.00,EXPENSE
+2026-10-30,Corrupted Amount,NotANumber,EXPENSE
+,Empty Date Field,100.00,EXPENSE
+2026-10-31,Invalid Type Transaction,500.00,UNKNOWN

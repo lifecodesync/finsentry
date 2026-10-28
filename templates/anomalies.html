@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Header & Ethical Disclaimer -->
+    <div class="pb-4 border-b border-slate-200">
+        <h1 class="text-2xl font-bold text-slate-800">Explainable Anomaly & Risk Center</h1>
+        <p class="text-sm text-slate-500 mt-1">Rule-based detection flags for potential duplicate billings and statistical baseline spending spikes.</p>
+    </div>
+
+    <!-- Mandatory Ethical Disclaimer Box -->
+    <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl text-xs text-amber-900 leading-relaxed">
+        <strong>⚠️ Fintech Governance & Explainability Notice:</strong>
+        FinSentry flags are <em>probabilistic risk indicators requiring human verification</em>. 
+        They do <strong>not</strong> constitute legal or conclusive proof of fraud. 
+        Every flag displays the full mathematical rule and context so the account holder can make an informed assessment.
+    </div>
+
+    <!-- Active Flags Section -->
+    <div class="space-y-4">
+        <div class="flex items-center justify-between">
+            <h2 class="text-lg font-bold text-slate-800">Active Flags Requiring Review ({{ active_flags|length }})</h2>
+        </div>
+
+        {% if active_flags %}
+        <div class="grid grid-cols-1 gap-4">
+            {% for flag in active_flags %}
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div class="space-y-1.5 max-w-3xl">
+                    <div class="flex items-center space-x-2">
+                        <span class="px-2 py-0.5 rounded text-[11px] font-bold 
+                            {% if flag.severity == 'HIGH' %}bg-rose-100 text-rose-800 border border-rose-200
+                            {% elif flag.severity == 'MEDIUM' %}bg-amber-100 text-amber-800 border border-amber-200
+                            {% else %}bg-blue-100 text-blue-800 border border-blue-200{% endif %}">
+                            {{ flag.severity }} SEVERITY
+                        </span>
+                        <span class="font-mono text-xs text-slate-400 font-semibold">{{ flag.flag_type }}</span>
+                        <span class="text-xs text-slate-400">• {{ flag.transaction.date }}</span>
+                    </div>
+
+                    <h3 class="text-base font-bold text-slate-900">
+                        {{ flag.transaction.description }} — <span class="text-rose-600">₹{{ flag.transaction.amount }}</span>
+                    </h3>
+
+                    <p class="text-xs text-slate-700 leading-relaxed bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                        <strong>Rule Trigger:</strong> {{ flag.explanation }}
+                    </p>
+
+                    <p class="text-xs text-indigo-700 font-medium">
+                        💡 <strong>Suggested Action:</strong> {{ flag.suggested_action }}
+                    </p>
+                </div>
+
+                <!-- Dismissal Form -->
+                <div class="md:w-64 flex-shrink-0 pt-3 md:pt-0 border-t md:border-t-0 md:border-l border-slate-100 md:pl-5">
+                    <form method="POST" action="{% url 'dismiss_flag' flag.flag_id %}" class="space-y-2">
+                        {% csrf_token %}
+                        <input type="text" name="dismissal_note" placeholder="Reason (e.g. Verified legit)" 
+                               class="w-full text-xs border border-slate-300 rounded px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                        <button type="submit" class="w-full py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded transition border border-slate-300">
+                            Dismiss Flag
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="bg-white p-12 text-center rounded-xl border border-slate-200 text-slate-400 text-sm">
+            ✅ No active risk flags! All transactions conform to expected thresholds.
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Dismissed Flags History -->
+    {% if dismissed_flags %}
+    <div class="pt-6 border-t border-slate-200 space-y-4">
+        <h3 class="text-base font-bold text-slate-700">Dismissed Flags Audit Log ({{ dismissed_flags|length }})</h3>
+        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <table class="w-full text-left text-xs">
+                <thead>
+                    <tr class="bg-slate-100 text-slate-500 uppercase font-semibold">
+                        <th class="py-2.5 px-3">Date</th>
+                        <th class="py-2.5 px-3">Transaction</th>
+                        <th class="py-2.5 px-3">Amount</th>
+                        <th class="py-2.5 px-3">Flag Type</th>
+                        <th class="py-2.5 px-3">User Dismissal Rationale</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-slate-600">
+                    {% for f in dismissed_flags %}
+                    <tr>
+                        <td class="py-2 px-3">{{ f.transaction.date }}</td>
+                        <td class="py-2 px-3 font-medium text-slate-800">{{ f.transaction.description }}</td>
+                        <td class="py-2 px-3 font-semibold">₹{{ f.transaction.amount }}</td>
+                        <td class="py-2 px-3 font-mono text-[11px]">{{ f.flag_type }}</td>
+                        <td class="py-2 px-3 italic text-slate-500">{{ f.dismissal_note|default:"User dismissed without note" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
