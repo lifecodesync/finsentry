@@ -259,3 +259,12 @@ def settings_view(request: HttpRequest) -> HttpResponse:
         "settings": settings,
         "simulation": simulation_result
     })
+
+
+
+def clear_data_view(request: HttpRequest) -> HttpResponse:
+    if request.method == "POST":
+        StoredTransaction.objects.all().delete()
+        StoredAnomalyFlag.objects.all().delete()
+        messages.info(request, "All transactions and risk flags have been cleared. Database is empty.")
+    return redirect("dashboard")

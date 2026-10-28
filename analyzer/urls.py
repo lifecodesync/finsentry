@@ -14,4 +14,5 @@ urlpatterns = [
     path("anomalies/", views.anomalies_view, name="anomalies"),
     path("anomalies/<str:flag_id>/dismiss/", views.dismiss_flag_view, name="dismiss_flag"),
     path("settings/", views.settings_view, name="settings"),
+    path("clear-data/", views.clear_data_view, name="clear_data"),
 ]
