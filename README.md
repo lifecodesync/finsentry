@@ -1,44 +1,46 @@
-# FinSentry — Explainable Transaction Risk & Cash-Flow Analyzer
+# FinSentry STS — Daily Safe-to-Spend & Financial Runway Guard
 
 ![Python 3.14](https://img.shields.io/badge/Python-3.14-blue.svg)
 ![Django 6.1](https://img.shields.io/badge/Django-6.1-green.svg)
-![Pandas 3.1](https://img.shields.io/badge/Pandas-3.1-orange.svg)
-![Tests](https://img.shields.io/badge/Tests-14%20Passing-brightgreen.svg)
-![Architecture](https://img.shields.io/badge/Architecture-Decoupled%20Domain-purple.svg)
+![Tests](https://img.shields.io/badge/Tests-18%20Passing-brightgreen.svg)
+![Security](https://img.shields.io/badge/Privacy-100%25%20Local%20SQLite-indigo.svg)
+![Architecture](https://img.shields.io/badge/Architecture-Decoupled%20Clean%20Domain-purple.svg)
 
-FinSentry is a secure, explainable personal finance risk engine and cash-flow analyzer built to provide transparent, rule-based auditing of transaction histories without sending private financial data to external cloud services or black-box AI APIs.
+**FinSentry STS** is an explainable, proactive personal finance web application built in Python and Django.
 
----
-
-## 🌟 Key Highlights & Engineering Features
-
-- **Strict Schema Validation & Dirty Row Isolation**: Ingests raw CSV statements, validates types, dates, and amounts using fixed-point `Decimal` arithmetic, and isolates corrupt rows without crashing.
-- **Explainable Categorization Engine**: Classifies income and expenditure using transparent keyword/regex heuristics and records human-readable reasoning (`category_reason`) for every assignment.
-- **Explainable Anomaly Flags**: Detects duplicate charges, unusual frequency velocity, and statistical baseline spending spikes ($> k \cdot \text{baseline}$). Every alert explains its trigger reason and suggested action.
-- **Recurring Payment Detection**: Groups merchant histories and identifies regular weekly/monthly billing cycles with confidence scores.
-- **Forward-Looking Cash-Flow Runway Warning**: Forecasts daily balances over 30-day windows to detect threshold breaches before scheduled obligations arrive.
-- **Decoupled Architecture**: Pure Python domain engine (`core/`) is 100% decoupled from the presentation framework (`Django`). Fully verifiable via CLI or automated tests without booting a web server.
+Unlike traditional budgeting apps that passively report where your money went after it is already spent, FinSentry answers the single most actionable financial question:
+> **"How much money can I safely spend today without defaulting on my Rent, missing an EMI, or raiding my Emergency savings?"**
 
 ---
 
-## 🏗️ System Architecture & Data Flow
+## 🌟 Key Engineering Features
+
+- **Proactive Safe-To-Spend (STS) Engine:** Automatically reserves funds for upcoming fixed obligations (Rent, EMI) and ring-fences protected savings (Emergency fund, General savings, Goal contribution) before computing daily spendable ceilings.
+- **Cycle Timing Logic:** Calculates exact calendar days remaining until the next salary credit date and dynamically divides the uncorrupted spendable balance across those days.
+- **"Check Before You Buy" Simulator:** Allows users to simulate any intended purchase (e.g. ₹2,500 shoes) before spending, instantly showing if it will cause an emergency reserve breach or by how much it will lower the daily allowance.
+- **Fixed Obligation Toggles:** One-click toggles to mark Rent or EMI as "Paid", immediately unlocking remaining liquidity for daily allocation without double-deduction.
+- **Live Discretionary Expense Logger:** Record daily expenses in real time to deduct from live bank balances and adjust today's remaining safe-to-spend allowance.
+- **100% On-Device Data Sovereignty:** Zero Firebase, zero cloud telemetry, and zero third-party AI APIs. All data is securely persisted in local SQLite with standard Django session authentication.
+- **High-Precision Decimal Arithmetic:** Eliminates IEEE-754 floating-point drift using Python's `decimal.Decimal` module across all mathematical layers.
+
+---
+
+## 🏗️ System Architecture & Financial Reservoir Flow
 
 ```mermaid
 flowchart TD
-    A[Raw Bank Statement CSV] --> B[core.parser.CSVTransactionParser]
-    B -->|Corrupt Rows| C[Dirty Row Isolation Log]
-    B -->|Validated Entities| D[core.models.Transaction]
-    D --> E[core.categorizer.TransactionCategorizer]
-    E --> F[core.detector.RiskAndAnomalyDetector]
-    F -->|Baseline Spikes & Duplicates| G[core.models.AnomalyFlag]
-    F -->|Cadence Variance| H[core.models.RecurringPattern]
-    D --> I[core.analytics.CashFlowAnalytics]
-    I --> J[Pandas Aggregation & Matplotlib Visuals]
-    
-    subgraph Persistence & UI Layer
-        D -.-> K[SQLite3 Database]
-        G -.-> K
-        K --> L[Django Web Dashboard]
+    A["Available Bank Balance"] --> B["Step 1: Minus Unpaid Fixed Obligations (Rent + EMI)"]
+    B --> C["After-Fixed Liquidity"]
+    C --> D["Step 2: Minus Protected Reserves (Emergency + Savings + Goal)"]
+    D --> E["Spendable Pool"]
+    E --> F["Step 3: Count Days Remaining in Current Salary Cycle"]
+    F --> G["Step 4: Daily STS = Spendable Pool ÷ Days Remaining"]
+    G --> H["Step 5: Weekly STS = min(Daily STS × 7, Spendable Pool)"]
+
+    subgraph "Interactive Controls"
+        I["'Check Before You Buy' Simulator"] -.-> E
+        J["Live Daily Expense Logger"] -.-> A
+        K["Rent / EMI Status Toggles"] -.-> B
     end
 ```
 
@@ -48,46 +50,41 @@ flowchart TD
 
 ```
 finsentry/
-├── core/                        # Pure Domain Logic (No Web Dependency)
-│   ├── __init__.py
-│   ├── exceptions.py            # Domain exception hierarchy (OOP)
+├── core/                        # Pure Python Domain Logic (Zero Web Dependency)
+│   ├── sts.py                   # Safe-to-Spend mathematical engine & purchase simulator
 │   ├── models.py                # Pure Python dataclasses
-│   ├── parser.py                # CSV validator & dirty row isolator
-│   ├── categorizer.py           # Rule-based explainable categorizer
+│   ├── exceptions.py            # Custom domain exception hierarchy
+│   ├── parser.py                # CSV ingestion engine
+│   ├── categorizer.py           # Keyword categorization engine
 │   ├── analytics.py             # Cash-flow calculations & Matplotlib charts
 │   └── detector.py              # Anomaly detection & runway projection
 │
 ├── analyzer/                    # Django Application Layer
 │   ├── migrations/              # SQLite database schema migrations
-│   ├── models.py                # StoredTransaction, StoredAnomalyFlag, AppSettings
-│   ├── views.py                 # Dashboard, upload, ledger, review controllers
+│   ├── models.py                # UserFinancialProfile, DailySpendEntry
+│   ├── forms.py                 # Registration, Profile Setup, and Spend forms
+│   ├── views.py                 # Web controllers (Auth, Dashboard, Setup, Simulator)
 │   ├── urls.py                  # Route bindings
-│   └── tests.py                 # Django integration tests
+│   └── tests.py                 # Integration tests
 │
 ├── config/                      # Django Project Configuration
-│   ├── settings.py
-│   └── urls.py
+│   ├── settings.py              # Application settings, templates, SQLite
+│   └── urls.py                  # Root route declarations
 │
-├── data/
-│   └── sample_transactions.csv  # Synthetic test data with intentional edge cases
-│
-├── templates/                   # Clean Tailwind CSS Web UI
-│   ├── base.html
-│   ├── dashboard.html
-│   ├── upload.html
-│   ├── transactions.html
-│   ├── anomalies.html
-│   └── settings.html
+├── templates/                   # Clean HTML5 + Tailwind CSS Web UI
+│   ├── base.html                # Master layout with top navigation
+│   ├── dashboard.html           # Main STS dashboard & simulators
+│   ├── profile_setup.html       # Financial credentials & allocations form
+│   └── auth/
+│       ├── login.html           # User sign-in page
+│       └── register.html        # New account registration page
 │
 ├── tests/                       # Unit Test Suite
-│   ├── __init__.py
-│   └── test_core.py
+│   └── test_sts.py              # 18 automated mathematical unit tests
 │
-├── manage.py                    # Django management script
-├── run_cli.py                   # Pure terminal / CLI runner
-├── seed_sample_data.py          # Quick database population script
-├── requirements.txt             # Pinned production dependencies
-└── PROJECT_DOSSIER.md           # College Viva, Theory & Interview Guide
+├── manage.py                    # Django CLI management script
+├── requirements.txt             # Pinned project dependencies
+└── PROJECT_DOSSIER.md           # Comprehensive viva defense & academic guide
 ```
 
 ---
@@ -101,47 +98,43 @@ finsentry/
 
 ### 2. Environment Setup
 ```powershell
-# Clone or navigate to the repository
+# Clone the repository
+git clone https://github.com/lifecodesync/finsentry.git
 cd finsentry
 
-# Activate your existing virtual environment
+# Create and activate virtual environment
+python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 
-# Install dependencies (if setting up fresh)
+# Install dependencies
 pip install -r requirements.txt
+
+# Run migrations
+python manage.py migrate
 ```
 
-### 3. Run Standalone CLI (Terminal Mode)
-```powershell
-python run_cli.py
-```
-
-### 4. Run Automated Test Suite
+### 3. Run Automated Tests
 ```powershell
 python manage.py test
 ```
-*Executes all 14 unit and integration test assertions across parsing, math, anomalies, and views.*
+*Executes all 18 unit and integration test assertions with 100% pass rate.*
 
-### 5. Launch the Web Interface
+### 4. Start the Web Server
 ```powershell
-# Populate database with sample dataset
-python seed_sample_data.py
-
-# Launch development web server
 python manage.py runserver
 ```
-Open **[http://127.0.0.1:8000](http://127.0.0.1:8000)** in your browser.
+Visit **[http://127.0.0.1:8000](http://127.0.0.1:8000)** in your browser.
 
 ---
 
 ## 🔒 Security & Privacy Model
 
-1. **Zero External Cloud Egress**: FinSentry processes statements entirely inside your local execution boundary. No banking credentials or private records are ever uploaded to third-party APIs.
-2. **Deterministic & Explainable**: No opaque black-box AI models that hallucinate risk scores. Every anomaly outputs its exact triggering condition.
-3. **Defense Against Decimal Drift**: Rejects standard IEEE-754 binary floats in favor of Python's fixed-point `decimal.Decimal` to ensure exact balance reconciliation.
+1. **Zero External Cloud Egress:** All calculations, user profiles, and spend records stay on your local machine.
+2. **Session Security:** Password hashing via PBKDF2 with SHA-256 and full CSRF protection on every form.
+3. **No Sensitive File Tracking:** Dedicated `.gitignore` prevents tracking virtual environments, caches, and local database files.
 
 ---
 
 ## 📜 Academic & Viva Specifications
 
-For full college project specifications, domain theory, system architecture, database schema, and viva preparation questions, refer to [PROJECT_DOSSIER.md](PROJECT_DOSSIER.md).
+For full college project specifications, domain taxonomy, system architecture, database schema, and viva preparation questions, refer to [PROJECT_DOSSIER.md](PROJECT_DOSSIER.md).
