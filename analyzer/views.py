@@ -1,7 +1,7 @@
 """
 analyzer/views.py
 Web views for the FinSentry Safe-to-Spend (STS) web application.
-Faithfully ported from Livia's daily rollover, reserve drain, and overspend resolution logic.
+Faithfully ported from Livia's daily rollover, frozen daily rate, and overspend resolution logic.
 """
 
 from datetime import date
@@ -74,9 +74,19 @@ def dashboard_view(request: HttpRequest) -> HttpResponse:
         profile.last_spend_date = today
         profile.save()
 
-    # 1. Compute Safe-To-Spend
+    # Get today's recorded discretionary expenses
+    todays_spends = DailySpendEntry.objects.filter(user=request.user, date=today)
+    spent_today = sum((s.amount for s in todays_spends), Decimal("0.00"))
+
+    # LIVIA FROZEN DAILY CEILING PRINCIPLE:
+    # Today's daily spending ceiling is computed from the balance at the START of today
+    # (live available_balance + spent_today).
+    # This prevents the double-deduction bug:
+    # If today's budget is ₹800 and you spend ₹10, remaining budget drops by EXACTLY ₹10 to ₹790.
+    starting_balance_today = profile.available_balance + spent_today
+
     sts = SafeToSpendCalculator.compute_sts(
-        available_balance=profile.available_balance,
+        available_balance=starting_balance_today,
         rent_amount=profile.rent_amount,
         rent_is_paid=profile.rent_is_paid,
         emi_amount=profile.emi_amount,
@@ -88,11 +98,7 @@ def dashboard_view(request: HttpRequest) -> HttpResponse:
         reference_date=today,
     )
 
-    # 2. Today's recorded expenses
-    todays_spends = DailySpendEntry.objects.filter(user=request.user, date=today)
-    spent_today = sum((s.amount for s in todays_spends), Decimal("0.00"))
-
-    # Livia Effective Today Budget (Base STS + any pool amount unlocked/absorbed today)
+    # Effective today's budget: Frozen base STS + any pool unlocked today
     effective_today_budget = sts.daily_sts + profile.overspend_absorbed_today
     remaining_today = max(Decimal("0.00"), effective_today_budget - spent_today)
     
@@ -100,14 +106,14 @@ def dashboard_view(request: HttpRequest) -> HttpResponse:
     uncovered_overspend = max(Decimal("0.00"), spent_today - effective_today_budget)
     has_overspend = uncovered_overspend > Decimal("0.00")
 
-    # Percentage of today's budget spent (capped at 100 for clean progress bars)
+    # Percentage of today's budget spent
     spend_percent = 0
     if effective_today_budget > Decimal("0.00"):
         spend_percent = min(100, int((spent_today / effective_today_budget) * 100))
     elif spent_today > Decimal("0.00"):
         spend_percent = 100
 
-    # 3. Handle 'Check Before You Buy' Simulator (Persisted in session so it never vanishes!)
+    # Handle 'Check Before You Buy' Simulator (Persisted in session so it never vanishes)
     if request.method == "POST" and "check_buy" in request.POST:
         cost_str = request.POST.get("item_cost", "0").strip()
         item_name = request.POST.get("item_name", "Desired Purchase").strip()
@@ -159,8 +165,12 @@ def resolve_overspend_view(request: HttpRequest) -> HttpResponse:
         profile = request.user.profile
         today = date.today()
 
+        todays_spends = DailySpendEntry.objects.filter(user=request.user, date=today)
+        spent_today = sum((s.amount for s in todays_spends), Decimal("0.00"))
+        starting_balance_today = profile.available_balance + spent_today
+
         sts = SafeToSpendCalculator.compute_sts(
-            available_balance=profile.available_balance,
+            available_balance=starting_balance_today,
             rent_amount=profile.rent_amount,
             rent_is_paid=profile.rent_is_paid,
             emi_amount=profile.emi_amount,
@@ -172,8 +182,6 @@ def resolve_overspend_view(request: HttpRequest) -> HttpResponse:
             reference_date=today,
         )
 
-        todays_spends = DailySpendEntry.objects.filter(user=request.user, date=today)
-        spent_today = sum((s.amount for s in todays_spends), Decimal("0.00"))
         effective_budget = sts.daily_sts + profile.overspend_absorbed_today
         uncovered = max(Decimal("0.00"), spent_today - effective_budget)
 

@@ -75,11 +75,10 @@ class FinSentryWebTests(TestCase):
 
     def test_overspend_choice_emergency(self):
         self.client.login(username="testuser", password="password123")
-        # Log heavy spend that triggers overspend
-        DailySpendEntry.objects.create(
-            user=self.user,
-            description="Big Expense",
-            amount=Decimal("5000.00")
+        # Log heavy spend that triggers overspend through real view
+        self.client.post(
+            reverse("log_spend"),
+            {"description": "Big Expense", "amount": "5000.00"}
         )
         # Check dashboard triggers overspend
         response = self.client.get(reverse("dashboard"))
@@ -94,3 +93,25 @@ class FinSentryWebTests(TestCase):
         # Emergency pool should be drained by overspend amount
         self.assertLess(self.profile.emergency_pool, Decimal("5000.00"))
         self.assertGreater(self.profile.overspend_absorbed_today, Decimal("0.00"))
+
+
+    def test_exact_subtraction_when_spending_money(self):
+        """Verifies that spending ₹10 drops remaining_today by EXACTLY ₹10 (Livia frozen daily ceiling)."""
+        self.client.login(username="testuser", password="password123")
+        # 1. Check initial dashboard remaining budget
+        res_initial = self.client.get(reverse("dashboard"))
+        initial_remaining = res_initial.context["remaining_today"]
+
+        # 2. Spend exactly ₹10.00
+        self.client.post(
+            reverse("log_spend"),
+            {"description": "Chikki Snack", "amount": "10.00"}
+        )
+
+        # 3. Check updated dashboard remaining budget
+        res_after = self.client.get(reverse("dashboard"))
+        after_remaining = res_after.context["remaining_today"]
+
+        # 4. Assert that remaining dropped by EXACTLY 10.00 (not 15!)
+        drop = initial_remaining - after_remaining
+        self.assertEqual(drop, Decimal("10.00"))
