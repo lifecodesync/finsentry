@@ -35,6 +35,10 @@ class UserFinancialProfile(models.Model):
     goal_target = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("40000.00"))
     goal_monthly_contribution = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("2500.00"))
 
+    # Overspend Tracking & Livia Rollover
+    overspend_absorbed_today = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal("0.00"))
+    last_spend_date = models.DateField(default=timezone.now)
+
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):

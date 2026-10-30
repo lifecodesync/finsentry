@@ -4,119 +4,131 @@
 <div class="max-w-3xl mx-auto space-y-6">
 
     <!-- Header -->
-    <div class="pb-4 border-b border-slate-200">
-        <h1 class="text-2xl font-bold text-slate-800">Financial Profile & Allocations</h1>
-        <p class="text-sm text-slate-500 mt-1">Configure your income cycle, current liquidity, and protected pools to calculate your daily Safe-To-Spend limit.</p>
+    <div class="pb-4 border-b border-livia-border">
+        <h1 class="text-2xl font-black text-livia-textPrimary tracking-tight">Financial Credentials & Allocations</h1>
+        <p class="text-xs text-livia-textSecondary mt-1">Configure your income cycle, current liquidity, and protected pools to calculate your daily Safe-To-Spend limit.</p>
     </div>
 
-    <!-- Onboarding Form -->
+    <!-- Onboarding / Settings Form -->
     <form method="POST" class="space-y-6">
         {% csrf_token %}
 
         <!-- Section 1: Inflow & Available Balance -->
-        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-            <h2 class="text-base font-bold text-slate-800 flex items-center space-x-2">
+        <div class="bg-livia-surface p-6 rounded-3xl border border-livia-border shadow-md space-y-4">
+            <h2 class="text-xs font-bold text-livia-gold uppercase tracking-wider flex items-center space-x-2">
                 <span>💰</span>
                 <span>Income Cycle & Current Bank Balance</span>
             </h2>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
                 <div>
-                    <label class="block font-semibold text-slate-700 mb-1">Monthly Salary (₹)</label>
-                    {{ form.monthly_salary }}
-                    <p class="text-slate-400 mt-1">Your regular take-home pay per cycle.</p>
+                    <label class="block font-semibold text-livia-textSecondary mb-1.5">Monthly Salary (₹)</label>
+                    <input type="number" step="0.01" name="monthly_salary" value="{{ form.monthly_salary.value|default:'60000.00' }}" required
+                           class="w-full bg-livia-elevated border border-livia-border rounded-xl p-3 text-sm text-livia-textPrimary font-mono font-semibold focus:outline-none focus:border-livia-gold">
+                    <p class="text-[10px] text-livia-textMuted mt-1">Your regular take-home pay per cycle.</p>
                 </div>
 
                 <div>
-                    <label class="block font-semibold text-slate-700 mb-1">Salary Day of Month</label>
-                    {{ form.salary_day }}
-                    <p class="text-slate-400 mt-1">Day of month salary arrives (1 - 28).</p>
+                    <label class="block font-semibold text-livia-textSecondary mb-1.5">Salary Day of Month</label>
+                    <input type="number" min="1" max="28" name="salary_day" value="{{ form.salary_day.value|default:'1' }}" required
+                           class="w-full bg-livia-elevated border border-livia-border rounded-xl p-3 text-sm text-livia-textPrimary font-mono font-semibold focus:outline-none focus:border-livia-gold">
+                    <p class="text-[10px] text-livia-textMuted mt-1">Day of month salary arrives (1 - 28).</p>
                 </div>
 
                 <div>
-                    <label class="block font-semibold text-slate-700 mb-1">Current Bank Balance (₹)</label>
-                    {{ form.available_balance }}
-                    <p class="text-slate-400 mt-1">Total liquid money available in bank right now.</p>
+                    <label class="block font-semibold text-livia-textSecondary mb-1.5">Current Bank Balance (₹)</label>
+                    <input type="number" step="0.01" name="available_balance" value="{{ form.available_balance.value|default:'35000.00' }}" required
+                           class="w-full bg-livia-elevated border border-livia-gold/40 rounded-xl p-3 text-sm text-livia-gold font-mono font-bold focus:outline-none focus:border-livia-gold">
+                    <p class="text-[10px] text-livia-textMuted mt-1">Total liquid money available in bank right now.</p>
                 </div>
             </div>
         </div>
 
         <!-- Section 2: Fixed Obligations (Rent & EMI) -->
-        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-            <h2 class="text-base font-bold text-slate-800 flex items-center space-x-2">
+        <div class="bg-livia-surface p-6 rounded-3xl border border-livia-border shadow-md space-y-4">
+            <h2 class="text-xs font-bold text-livia-gold uppercase tracking-wider flex items-center space-x-2">
                 <span>🏠</span>
                 <span>Fixed Monthly Obligations (Must be paid before spending)</span>
             </h2>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                 <!-- Rent Block -->
-                <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
-                    <label class="block font-semibold text-slate-800">Monthly Rent Amount (₹)</label>
-                    {{ form.rent_amount }}
+                <div class="p-4 bg-livia-elevated rounded-2xl border border-livia-border space-y-2">
+                    <label class="block font-semibold text-livia-textPrimary">Monthly Rent Amount (₹)</label>
+                    <input type="number" step="0.01" name="rent_amount" value="{{ form.rent_amount.value|default:'12000.00' }}" required
+                           class="w-full bg-livia-surface border border-livia-border rounded-xl p-2.5 text-sm text-livia-textPrimary font-mono font-semibold focus:outline-none focus:border-livia-gold">
                     <div class="flex items-center space-x-2 pt-1">
-                        {{ form.rent_is_paid }}
-                        <label for="{{ form.rent_is_paid.id_for_label }}" class="text-slate-600 font-medium">Already paid for this cycle</label>
+                        <input type="checkbox" name="rent_is_paid" id="id_rent_is_paid" {% if form.rent_is_paid.value %}checked{% endif %}
+                               class="w-4 h-4 text-livia-gold bg-livia-surface rounded border-livia-border focus:ring-0">
+                        <label for="id_rent_is_paid" class="text-livia-textSecondary font-medium text-xs">Already paid for this salary cycle</label>
                     </div>
                 </div>
 
                 <!-- EMI Block -->
-                <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
-                    <label class="block font-semibold text-slate-800">Monthly EMI / Loan Amount (₹)</label>
-                    {{ form.emi_amount }}
+                <div class="p-4 bg-livia-elevated rounded-2xl border border-livia-border space-y-2">
+                    <label class="block font-semibold text-livia-textPrimary">Monthly EMI / Loan Amount (₹)</label>
+                    <input type="number" step="0.01" name="emi_amount" value="{{ form.emi_amount.value|default:'4500.00' }}" required
+                           class="w-full bg-livia-surface border border-livia-border rounded-xl p-2.5 text-sm text-livia-textPrimary font-mono font-semibold focus:outline-none focus:border-livia-gold">
                     <div class="flex items-center space-x-2 pt-1">
-                        {{ form.emi_is_paid }}
-                        <label for="{{ form.emi_is_paid.id_for_label }}" class="text-slate-600 font-medium">Already paid for this cycle</label>
+                        <input type="checkbox" name="emi_is_paid" id="id_emi_is_paid" {% if form.emi_is_paid.value %}checked{% endif %}
+                               class="w-4 h-4 text-livia-gold bg-livia-surface rounded border-livia-border focus:ring-0">
+                        <label for="id_emi_is_paid" class="text-livia-textSecondary font-medium text-xs">Already paid for this salary cycle</label>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Section 3: Protected Reserves & Goal -->
-        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-            <h2 class="text-base font-bold text-slate-800 flex items-center space-x-2">
+        <div class="bg-livia-surface p-6 rounded-3xl border border-livia-border shadow-md space-y-4">
+            <h2 class="text-xs font-bold text-livia-gold uppercase tracking-wider flex items-center space-x-2">
                 <span>🛡️</span>
                 <span>Protected Savings Pools & Financial Goal</span>
             </h2>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                 <div>
-                    <label class="block font-semibold text-slate-700 mb-1">Emergency Fund Allocation (₹)</label>
-                    {{ form.emergency_pool }}
-                    <p class="text-slate-400 mt-1">Reserved for unforeseen emergencies; never included in daily budget.</p>
+                    <label class="block font-semibold text-sky-400 mb-1.5">Emergency Fund Allocation (₹)</label>
+                    <input type="number" step="0.01" name="emergency_pool" value="{{ form.emergency_pool.value|default:'5000.00' }}" required
+                           class="w-full bg-livia-elevated border border-livia-border rounded-xl p-3 text-sm text-livia-textPrimary font-mono font-semibold focus:outline-none focus:border-livia-gold">
+                    <p class="text-[10px] text-livia-textMuted mt-1">Reserved for unforeseen emergencies; shielded from daily spending.</p>
                 </div>
 
                 <div>
-                    <label class="block font-semibold text-slate-700 mb-1">General Savings Allocation (₹)</label>
-                    {{ form.savings_pool }}
-                    <p class="text-slate-400 mt-1">Amount to safely lock away for the future.</p>
+                    <label class="block font-semibold text-emerald-400 mb-1.5">General Savings Allocation (₹)</label>
+                    <input type="number" step="0.01" name="savings_pool" value="{{ form.savings_pool.value|default:'3000.00' }}" required
+                           class="w-full bg-livia-elevated border border-livia-border rounded-xl p-3 text-sm text-livia-textPrimary font-mono font-semibold focus:outline-none focus:border-livia-gold">
+                    <p class="text-[10px] text-livia-textMuted mt-1">Amount to safely lock away for future wealth.</p>
                 </div>
             </div>
 
-            <div class="pt-4 border-t border-slate-100 space-y-3">
-                <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Active Financial Goal</h3>
+            <div class="pt-4 border-t border-livia-border space-y-3">
+                <h3 class="text-xs font-bold text-livia-textSecondary uppercase tracking-wider">Active Financial Goal Target</h3>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
                     <div>
-                        <label class="block font-medium text-slate-700 mb-1">Goal Name</label>
-                        {{ form.goal_name }}
+                        <label class="block font-medium text-livia-textSecondary mb-1">Goal Name</label>
+                        <input type="text" name="goal_name" value="{{ form.goal_name.value|default:'Buffer / Upgrade' }}" required
+                               class="w-full bg-livia-elevated border border-livia-border rounded-xl p-2.5 text-xs text-livia-textPrimary focus:outline-none focus:border-livia-gold">
                     </div>
                     <div>
-                        <label class="block font-medium text-slate-700 mb-1">Target Amount (₹)</label>
-                        {{ form.goal_target }}
+                        <label class="block font-medium text-livia-textSecondary mb-1">Target Amount (₹)</label>
+                        <input type="number" step="0.01" name="goal_target" value="{{ form.goal_target.value|default:'40000.00' }}" required
+                               class="w-full bg-livia-elevated border border-livia-border rounded-xl p-2.5 text-xs text-livia-textPrimary font-mono focus:outline-none focus:border-livia-gold">
                     </div>
                     <div>
-                        <label class="block font-medium text-slate-700 mb-1">Monthly Contribution (₹)</label>
-                        {{ form.goal_monthly_contribution }}
+                        <label class="block font-medium text-livia-textSecondary mb-1">Monthly Contribution (₹)</label>
+                        <input type="number" step="0.01" name="goal_monthly_contribution" value="{{ form.goal_monthly_contribution.value|default:'2500.00' }}" required
+                               class="w-full bg-livia-elevated border border-livia-border rounded-xl p-2.5 text-xs text-livia-textPrimary font-mono focus:outline-none focus:border-livia-gold">
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Save Button -->
-        <div class="flex justify-end space-x-3 pt-2">
-            <a href="{% url 'dashboard' %}" class="px-5 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold text-xs rounded-xl transition">
+        <!-- Submit Actions -->
+        <div class="flex items-center justify-end space-x-3 pt-2">
+            <a href="{% url 'dashboard' %}" class="px-5 py-3 bg-livia-elevated hover:bg-livia-border text-livia-textSecondary hover:text-livia-textPrimary font-semibold text-xs rounded-xl transition">
                 Cancel
             </a>
-            <button type="submit" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition">
+            <button type="submit" class="px-6 py-3 bg-livia-gold hover:bg-livia-goldHover text-black font-extrabold text-xs rounded-xl shadow-lg transition">
                 Save & Recalculate Safe-To-Spend &rarr;
             </button>
         </div>

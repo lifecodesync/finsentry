@@ -38,7 +38,7 @@ class FinSentryWebTests(TestCase):
         self.client.login(username="testuser", password="password123")
         response = self.client.get(reverse("dashboard"))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Today's Safe-to-Spend Ceiling")
+        self.assertContains(response, "Today's Remaining Safe-To-Spend")
         self.assertContains(response, "The Money Reservoir")
 
     def test_log_spend_view(self):
@@ -68,3 +68,29 @@ class FinSentryWebTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Purchase Approved")
+        # Session persistence check
+        session = self.client.session
+        self.assertIn("last_simulation", session)
+        self.assertEqual(session["last_simulation"]["item_name"], "Book")
+
+    def test_overspend_choice_emergency(self):
+        self.client.login(username="testuser", password="password123")
+        # Log heavy spend that triggers overspend
+        DailySpendEntry.objects.create(
+            user=self.user,
+            description="Big Expense",
+            amount=Decimal("5000.00")
+        )
+        # Check dashboard triggers overspend
+        response = self.client.get(reverse("dashboard"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context["has_overspend"])
+        self.assertContains(response, "Daily Overspend Alert")
+
+        # Resolve via Emergency
+        res = self.client.post(reverse("resolve_overspend"), {"choice": "emergency"})
+        self.assertEqual(res.status_code, 302)
+        self.profile.refresh_from_db()
+        # Emergency pool should be drained by overspend amount
+        self.assertLess(self.profile.emergency_pool, Decimal("5000.00"))
+        self.assertGreater(self.profile.overspend_absorbed_today, Decimal("0.00"))

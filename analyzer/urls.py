@@ -14,4 +14,6 @@ urlpatterns = [
     path("setup/", views.profile_setup_view, name="profile_setup"),
     path("spend/", views.log_spend_view, name="log_spend"),
     path("toggle/<str:bill_type>/", views.toggle_obligation_view, name="toggle_obligation"),
+    path("resolve-overspend/", views.resolve_overspend_view, name="resolve_overspend"),
+    path("clear-simulation/", views.clear_simulation_view, name="clear_simulation"),
 ]

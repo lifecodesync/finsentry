@@ -3,207 +3,341 @@
 {% block content %}
 <div class="space-y-6">
 
-    <!-- Top Headline -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-3 border-b border-slate-200">
+    <!-- Top Headline & Profile Link -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-3 border-b border-livia-border gap-3">
         <div>
-            <h1 class="text-2xl font-bold text-slate-800">Daily Safe-To-Spend Dashboard</h1>
-            <p class="text-xs text-slate-500 mt-0.5">Real-time financial guard powered by the Livia STS algorithm.</p>
+            <h1 class="text-2xl font-black text-livia-textPrimary tracking-tight">Financial Runway & STS Dashboard</h1>
+            <p class="text-xs text-livia-textSecondary mt-0.5">Real-time daily spendable ceiling & reserve protection engine.</p>
         </div>
-        <div class="mt-3 sm:mt-0 flex items-center space-x-2">
-            <a href="{% url 'profile_setup' %}" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-xl text-xs font-semibold transition">
-                ⚙️ Update Balance & Bills
+        <div class="flex items-center space-x-2">
+            <a href="{% url 'profile_setup' %}" class="px-3.5 py-2 bg-livia-surface hover:bg-livia-elevated text-livia-textSecondary hover:text-livia-gold border border-livia-border rounded-xl text-xs font-semibold transition flex items-center space-x-1.5 shadow-sm">
+                <span>⚙️</span>
+                <span>Adjust Balances & Bills</span>
             </a>
         </div>
     </div>
 
-    <!-- HERO CARD: Daily Safe-To-Spend -->
-    <div class="p-6 sm:p-8 rounded-3xl border shadow-sm transition 
-        {% if sts.status == 'HEALTHY' %}bg-emerald-50/60 border-emerald-200 text-emerald-950
-        {% elif sts.status == 'TIGHT' %}bg-amber-50/60 border-amber-200 text-amber-950
-        {% else %}bg-rose-50/60 border-rose-200 text-rose-950{% endif %}">
-        
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div class="space-y-2">
+    <!-- LIVIA OVERSPEND RESOLUTION SHEET / ALERT -->
+    {% if has_overspend %}
+    <div class="bg-gradient-to-r from-livia-oxblood/30 to-livia-surface border-2 border-livia-oxblood/60 p-5 sm:p-6 rounded-3xl shadow-xl space-y-4">
+        <div class="flex items-start justify-between gap-4">
+            <div class="space-y-1">
                 <div class="flex items-center space-x-2">
-                    <span class="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full 
-                        {% if sts.status == 'HEALTHY' %}bg-emerald-200/80 text-emerald-800
-                        {% elif sts.status == 'TIGHT' %}bg-amber-200/80 text-amber-800
-                        {% else %}bg-rose-200/80 text-rose-800{% endif %}">
+                    <span class="text-lg">⚠️</span>
+                    <h3 class="text-sm font-black text-rose-300 uppercase tracking-wider">
+                        Daily Overspend Alert &bull; Exceeded by ₹{{ uncovered_overspend }}
+                    </h3>
+                </div>
+                <p class="text-xs text-livia-textSecondary leading-relaxed max-w-2xl">
+                    You have spent <strong class="text-livia-textPrimary">₹{{ spent_today }}</strong> today, surpassing your daily safe ceiling of 
+                    <strong class="text-livia-textPrimary">₹{{ effective_today_budget }}</strong>. 
+                    In accordance with the Livia Safe-To-Spend protocol, choose how you want to resolve this overspend:
+                </p>
+            </div>
+            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-livia-oxblood/40 text-rose-300 border border-livia-oxblood/50 uppercase tracking-wider whitespace-nowrap">
+                Action Required
+            </span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
+            <!-- Choice 1: Emergency Pool -->
+            <form method="POST" action="{% url 'resolve_overspend' %}">
+                {% csrf_token %}
+                <input type="hidden" name="choice" value="emergency">
+                <button type="submit" class="w-full text-left p-3.5 bg-livia-surface hover:bg-livia-elevated border border-livia-sapphire/50 hover:border-livia-sapphire rounded-2xl transition group space-y-1">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-sky-300 flex items-center space-x-1">
+                            <span>🛡️</span>
+                            <span>Cover from Emergency</span>
+                        </span>
+                        <span class="text-[10px] font-mono text-livia-textMuted">₹{{ profile.emergency_pool }}</span>
+                    </div>
+                    <p class="text-[11px] text-livia-textSecondary leading-snug">
+                        Deducts ₹{{ uncovered_overspend }} from Emergency. Protects tomorrow's Safe-To-Spend so it does not drop!
+                    </p>
+                </button>
+            </form>
+
+            <!-- Choice 2: Savings Pool -->
+            <form method="POST" action="{% url 'resolve_overspend' %}">
+                {% csrf_token %}
+                <input type="hidden" name="choice" value="savings">
+                <button type="submit" class="w-full text-left p-3.5 bg-livia-surface hover:bg-livia-elevated border border-livia-jade/50 hover:border-livia-jade rounded-2xl transition group space-y-1">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-emerald-300 flex items-center space-x-1">
+                            <span>🌿</span>
+                            <span>Cover from Savings</span>
+                        </span>
+                        <span class="text-[10px] font-mono text-livia-textMuted">₹{{ profile.savings_pool }}</span>
+                    </div>
+                    <p class="text-[11px] text-livia-textSecondary leading-snug">
+                        Deducts ₹{{ uncovered_overspend }} from Savings pool. Keeps upcoming days' daily spending steady.
+                    </p>
+                </button>
+            </form>
+
+            <!-- Choice 3: Spread across remaining days -->
+            <form method="POST" action="{% url 'resolve_overspend' %}">
+                {% csrf_token %}
+                <input type="hidden" name="choice" value="spread">
+                <button type="submit" class="w-full text-left p-3.5 bg-livia-surface hover:bg-livia-elevated border border-livia-border hover:border-livia-gold/40 rounded-2xl transition group space-y-1">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-livia-gold flex items-center space-x-1">
+                            <span>📉</span>
+                            <span>Reduce Upcoming Days</span>
+                        </span>
+                        <span class="text-[10px] font-mono text-livia-textMuted">{{ sts.days_remaining }} days</span>
+                    </div>
+                    <p class="text-[11px] text-livia-textSecondary leading-snug">
+                        Leaves savings intact. Spreads the deficit naturally across all remaining days until next salary.
+                    </p>
+                </button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- HERO CARD: DAILY SAFE-TO-SPEND -->
+    <div class="p-6 sm:p-8 rounded-3xl border shadow-2xl relative overflow-hidden transition
+        {% if sts.status == 'HEALTHY' %}bg-gradient-to-br from-livia-surface via-livia-surface to-[#111A15] border-livia-emerald/40
+        {% elif sts.status == 'TIGHT' %}bg-gradient-to-br from-livia-surface via-livia-surface to-[#1A1811] border-livia-gold/40
+        {% else %}bg-gradient-to-br from-livia-surface via-livia-surface to-[#1A1111] border-livia-garnet/40{% endif %}">
+        
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+            <div class="space-y-3">
+                <div class="flex items-center space-x-2.5">
+                    <span class="text-[11px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-full border
+                        {% if sts.status == 'HEALTHY' %}bg-livia-emerald/15 text-emerald-300 border-livia-emerald/30
+                        {% elif sts.status == 'TIGHT' %}bg-livia-gold/15 text-livia-gold border-livia-gold/30
+                        {% else %}bg-livia-garnet/15 text-rose-300 border-livia-garnet/30{% endif %}">
                         {{ sts.status }} RUNWAY
                     </span>
-                    <span class="text-xs font-medium text-slate-500">• {{ sts.days_remaining }} days until next salary</span>
+                    <span class="text-xs font-semibold text-livia-textSecondary">&bull; {{ sts.days_remaining }} days until next salary</span>
                 </div>
 
-                <p class="text-xs text-slate-500 font-semibold uppercase tracking-wider">Today's Safe-to-Spend Ceiling</p>
-                
-                <div class="flex items-baseline space-x-3">
-                    <span class="text-4xl sm:text-5xl font-black tracking-tight 
-                        {% if sts.status == 'HEALTHY' %}text-emerald-700
-                        {% elif sts.status == 'TIGHT' %}text-amber-700
-                        {% else %}text-rose-700{% endif %}">
-                        ₹{{ sts.daily_sts }}
-                    </span>
-                    <span class="text-sm font-semibold text-slate-500">/ day</span>
+                <div>
+                    <p class="text-xs text-livia-textMuted font-bold uppercase tracking-wider">Today's Remaining Safe-To-Spend</p>
+                    <div class="flex items-baseline space-x-3 mt-1">
+                        <span class="text-5xl sm:text-6xl font-black tracking-tight font-mono
+                            {% if sts.status == 'HEALTHY' %}text-emerald-400
+                            {% elif sts.status == 'TIGHT' %}text-livia-gold
+                            {% else %}text-rose-400{% endif %}">
+                            ₹{{ remaining_today }}
+                        </span>
+                        <span class="text-sm font-semibold text-livia-textMuted">remaining today</span>
+                    </div>
                 </div>
 
-                <p class="text-xs text-slate-600 max-w-lg leading-relaxed pt-1">
+                <!-- Live Progress Meter -->
+                <div class="space-y-1.5 max-w-md pt-1">
+                    <div class="flex justify-between text-[11px] text-livia-textSecondary font-medium">
+                        <span>Spent: <strong class="text-livia-textPrimary">₹{{ spent_today }}</strong></span>
+                        <span>Daily Target: <strong class="text-livia-textPrimary">₹{{ effective_today_budget }}</strong></span>
+                    </div>
+                    <div class="w-full bg-livia-bg h-2.5 rounded-full overflow-hidden border border-livia-border">
+                        <div class="h-full rounded-full transition-all duration-500
+                            {% if spend_percent >= 100 %}bg-rose-500
+                            {% elif spend_percent >= 75 %}bg-amber-400
+                            {% else %}bg-emerald-500{% endif %}" 
+                            style="width: {{ spend_percent }}%;">
+                        </div>
+                    </div>
+                </div>
+
+                <p class="text-xs text-livia-textSecondary max-w-lg leading-relaxed pt-1">
                     {{ sts.status_message }}
                 </p>
             </div>
 
-            <!-- Mini Summary Stats -->
-            <div class="grid grid-cols-2 gap-3 sm:gap-4 md:border-l border-slate-200/80 md:pl-6 text-xs">
-                <div class="bg-white/80 p-3.5 rounded-xl border border-slate-200 shadow-sm">
-                    <p class="text-slate-400 font-medium">Weekly Spendable</p>
-                    <p class="text-lg font-bold text-slate-800 mt-0.5">₹{{ sts.weekly_sts }}</p>
+            <!-- Mini Summary Metrics Grid -->
+            <div class="grid grid-cols-2 gap-3 md:border-l border-livia-border md:pl-6 text-xs">
+                <div class="bg-livia-elevated/70 p-3.5 rounded-2xl border border-livia-border space-y-0.5">
+                    <p class="text-livia-textMuted text-[11px] font-medium">Daily Safe Ceiling</p>
+                    <p class="text-base font-bold text-livia-textPrimary font-mono">₹{{ sts.daily_sts }}</p>
+                    <p class="text-[10px] text-livia-textMuted">Baseline rate/day</p>
                 </div>
 
-                <div class="bg-white/80 p-3.5 rounded-xl border border-slate-200 shadow-sm">
-                    <p class="text-slate-400 font-medium">Cycle Spendable Pool</p>
-                    <p class="text-lg font-bold text-slate-800 mt-0.5">₹{{ sts.spendable_balance }}</p>
+                <div class="bg-livia-elevated/70 p-3.5 rounded-2xl border border-livia-border space-y-0.5">
+                    <p class="text-livia-textMuted text-[11px] font-medium">Weekly Spendable</p>
+                    <p class="text-base font-bold text-livia-gold font-mono">₹{{ sts.weekly_sts }}</p>
+                    <p class="text-[10px] text-livia-textMuted">Capped 7-day safe pool</p>
                 </div>
 
-                <div class="bg-white/80 p-3.5 rounded-xl border border-slate-200 shadow-sm">
-                    <p class="text-slate-400 font-medium">Spent Today</p>
-                    <p class="text-lg font-bold text-rose-600 mt-0.5">₹{{ spent_today }}</p>
+                <div class="bg-livia-elevated/70 p-3.5 rounded-2xl border border-livia-border space-y-0.5">
+                    <p class="text-livia-textMuted text-[11px] font-medium">Cycle Spendable Pool</p>
+                    <p class="text-base font-bold text-livia-textPrimary font-mono">₹{{ sts.spendable_balance }}</p>
+                    <p class="text-[10px] text-livia-textMuted">Liquid after all shields</p>
                 </div>
 
-                <div class="bg-white/80 p-3.5 rounded-xl border border-slate-200 shadow-sm">
-                    <p class="text-slate-400 font-medium">Remaining Today</p>
-                    <p class="text-lg font-bold text-emerald-600 mt-0.5">₹{{ remaining_today }}</p>
+                <div class="bg-livia-elevated/70 p-3.5 rounded-2xl border border-livia-border space-y-0.5">
+                    <p class="text-livia-textMuted text-[11px] font-medium">Protected Reserves</p>
+                    <p class="text-base font-bold text-sky-400 font-mono">₹{{ sts.emergency_alloc|add:sts.savings_alloc|add:sts.goal_contribution }}</p>
+                    <p class="text-[10px] text-livia-textMuted">Locked emergency/goals</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- SECTION: Fixed Obligations Quick Status & Toggle -->
-    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
-        <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Fixed Monthly Obligations Status</h3>
+    <!-- FIXED MONTHLY OBLIGATIONS STATUS (Rent & EMI) -->
+    <div class="bg-livia-surface p-5 sm:p-6 rounded-3xl border border-livia-border shadow-md space-y-3">
+        <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold text-livia-gold uppercase tracking-wider flex items-center space-x-1.5">
+                <span>🏠</span>
+                <span>Fixed Monthly Obligations (Must be paid before spending)</span>
+            </h3>
+            <span class="text-[11px] text-livia-textMuted">1-Click Status Toggles</span>
+        </div>
+
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-            <!-- Rent Box -->
-            <div class="flex items-center justify-between p-3.5 rounded-xl border {% if profile.rent_is_paid %}bg-slate-50 border-slate-200{% else %}bg-amber-50/50 border-amber-200{% endif %}">
+            <!-- Rent Block -->
+            <div class="flex items-center justify-between p-4 rounded-2xl border transition
+                {% if profile.rent_is_paid %}bg-livia-elevated/40 border-livia-border
+                {% else %}bg-amber-950/20 border-amber-800/40{% endif %}">
                 <div>
-                    <p class="font-bold text-slate-800">Monthly Rent: ₹{{ profile.rent_amount }}</p>
-                    <p class="text-[11px] text-slate-500 mt-0.5">
-                        Status: <strong class="{% if profile.rent_is_paid %}text-emerald-600{% else %}text-amber-700{% endif %}">
-                            {% if profile.rent_is_paid %}✅ Already Paid{% else %}⏳ Unpaid (₹{{ profile.rent_amount }} reserved){% endif %}
+                    <p class="font-bold text-livia-textPrimary text-sm">Monthly Rent &bull; ₹{{ profile.rent_amount }}</p>
+                    <p class="text-[11px] text-livia-textSecondary mt-0.5">
+                        Status: <strong class="{% if profile.rent_is_paid %}text-emerald-400{% else %}text-amber-400{% endif %}">
+                            {% if profile.rent_is_paid %}✅ Already Paid (Unlocked){% else %}⏳ Unpaid (₹{{ profile.rent_amount }} reserved){% endif %}
                         </strong>
                     </p>
                 </div>
                 <form method="POST" action="{% url 'toggle_obligation' 'rent' %}">
                     {% csrf_token %}
-                    <button type="submit" class="px-3 py-1.5 rounded-lg font-semibold text-[11px] border shadow-sm transition
-                        {% if profile.rent_is_paid %}bg-slate-200 text-slate-700 hover:bg-slate-300
-                        {% else %}bg-emerald-600 text-white hover:bg-emerald-700{% endif %}">
-                        {% if profile.rent_is_paid %}Mark Unpaid{% else %}Mark as Paid{% endif %}
+                    <button type="submit" class="px-3.5 py-2 rounded-xl font-bold text-[11px] transition shadow-sm
+                        {% if profile.rent_is_paid %}bg-livia-elevated text-livia-textSecondary hover:text-livia-textPrimary border border-livia-border
+                        {% else %}bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-950/50{% endif %}">
+                        {% if profile.rent_is_paid %}Mark as Unpaid{% else %}Mark as Paid &check;{% endif %}
                     </button>
                 </form>
             </div>
 
-            <!-- EMI Box -->
-            <div class="flex items-center justify-between p-3.5 rounded-xl border {% if profile.emi_is_paid %}bg-slate-50 border-slate-200{% else %}bg-amber-50/50 border-amber-200{% endif %}">
+            <!-- EMI Block -->
+            <div class="flex items-center justify-between p-4 rounded-2xl border transition
+                {% if profile.emi_is_paid %}bg-livia-elevated/40 border-livia-border
+                {% else %}bg-amber-950/20 border-amber-800/40{% endif %}">
                 <div>
-                    <p class="font-bold text-slate-800">Monthly EMI: ₹{{ profile.emi_amount }}</p>
-                    <p class="text-[11px] text-slate-500 mt-0.5">
-                        Status: <strong class="{% if profile.emi_is_paid %}text-emerald-600{% else %}text-amber-700{% endif %}">
-                            {% if profile.emi_is_paid %}✅ Already Paid{% else %}⏳ Unpaid (₹{{ profile.emi_amount }} reserved){% endif %}
+                    <p class="font-bold text-livia-textPrimary text-sm">Monthly EMI / Loan &bull; ₹{{ profile.emi_amount }}</p>
+                    <p class="text-[11px] text-livia-textSecondary mt-0.5">
+                        Status: <strong class="{% if profile.emi_is_paid %}text-emerald-400{% else %}text-amber-400{% endif %}">
+                            {% if profile.emi_is_paid %}✅ Already Paid (Unlocked){% else %}⏳ Unpaid (₹{{ profile.emi_amount }} reserved){% endif %}
                         </strong>
                     </p>
                 </div>
                 <form method="POST" action="{% url 'toggle_obligation' 'emi' %}">
                     {% csrf_token %}
-                    <button type="submit" class="px-3 py-1.5 rounded-lg font-semibold text-[11px] border shadow-sm transition
-                        {% if profile.emi_is_paid %}bg-slate-200 text-slate-700 hover:bg-slate-300
-                        {% else %}bg-emerald-600 text-white hover:bg-emerald-700{% endif %}">
-                        {% if profile.emi_is_paid %}Mark Unpaid{% else %}Mark as Paid{% endif %}
+                    <button type="submit" class="px-3.5 py-2 rounded-xl font-bold text-[11px] transition shadow-sm
+                        {% if profile.emi_is_paid %}bg-livia-elevated text-livia-textSecondary hover:text-livia-textPrimary border border-livia-border
+                        {% else %}bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-950/50{% endif %}">
+                        {% if profile.emi_is_paid %}Mark as Unpaid{% else %}Mark as Paid &check;{% endif %}
                     </button>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- TWO COLUMN: Quick Spend Logger & Check Before You Buy Simulator -->
+    <!-- TWO COLUMN: QUICK EXPENSE LOGGER & CHECK BEFORE YOU BUY SIMULATOR -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
         <!-- Column A: Log Today's Spend -->
-        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+        <div class="bg-livia-surface p-5 sm:p-6 rounded-3xl border border-livia-border shadow-md space-y-4">
             <div>
-                <h3 class="text-base font-bold text-slate-800">Log an Expense Today</h3>
-                <p class="text-xs text-slate-500 mt-0.5">Subtract spending as it happens. Deducts from your live bank balance.</p>
+                <h3 class="text-base font-bold text-livia-textPrimary flex items-center space-x-2">
+                    <span>💳</span>
+                    <span>Log Expense Today</span>
+                </h3>
+                <p class="text-xs text-livia-textSecondary mt-0.5">
+                    Subtract daily spending as it happens. Deducts directly from your live bank balance.
+                </p>
             </div>
 
             <form method="POST" action="{% url 'log_spend' %}" class="space-y-3 text-xs">
                 {% csrf_token %}
                 <div>
-                    <label class="block font-semibold text-slate-700 mb-1">Expense Description</label>
-                    {{ spend_form.description }}
+                    <label class="block font-semibold text-livia-textSecondary mb-1">Expense Description</label>
+                    <input type="text" name="description" placeholder="e.g. Lunch with team, Groceries, Cab" required
+                           class="w-full bg-livia-elevated border border-livia-border rounded-xl p-2.5 text-sm text-livia-textPrimary placeholder:text-livia-textMuted focus:outline-none focus:border-livia-gold">
                 </div>
                 <div>
-                    <label class="block font-semibold text-slate-700 mb-1">Amount Spent (₹)</label>
-                    {{ spend_form.amount }}
+                    <label class="block font-semibold text-livia-textSecondary mb-1">Amount Spent (₹)</label>
+                    <input type="number" step="0.01" name="amount" placeholder="e.g. 250.00" required
+                           class="w-full bg-livia-elevated border border-livia-border rounded-xl p-2.5 text-sm text-livia-textPrimary font-mono font-semibold placeholder:text-livia-textMuted focus:outline-none focus:border-livia-gold">
                 </div>
-                <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-sm transition">
+                <button type="submit" class="w-full py-3 bg-livia-gold hover:bg-livia-goldHover text-black font-extrabold text-xs rounded-xl shadow-md transition">
                     Log Expense & Deduct &rarr;
                 </button>
             </form>
 
-            <!-- Today's Spend Log -->
-            <div class="pt-3 border-t border-slate-100">
-                <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Today's Transactions</p>
-                <div class="space-y-1.5 max-h-36 overflow-y-auto text-xs">
+            <!-- Today's Transaction History List -->
+            <div class="pt-3 border-t border-livia-border space-y-2">
+                <p class="text-[11px] font-bold text-livia-gold uppercase tracking-wider">Today's Transactions</p>
+                <div class="space-y-1.5 max-h-40 overflow-y-auto text-xs pr-1">
                     {% for s in todays_spends %}
-                    <div class="flex justify-between items-center py-1.5 px-2.5 bg-slate-50 rounded-lg">
-                        <span class="text-slate-700 font-medium">{{ s.description }}</span>
-                        <span class="font-bold text-rose-600">-₹{{ s.amount }}</span>
+                    <div class="flex justify-between items-center py-2 px-3 bg-livia-elevated rounded-xl border border-livia-border">
+                        <span class="text-livia-textPrimary font-medium">{{ s.description }}</span>
+                        <span class="font-bold font-mono text-rose-400">-₹{{ s.amount }}</span>
                     </div>
                     {% empty %}
-                    <p class="text-slate-400 text-xs py-2 text-center">No expenses logged yet today.</p>
+                    <p class="text-livia-textMuted text-xs py-3 text-center">No expenses logged yet today.</p>
                     {% endfor %}
                 </div>
             </div>
         </div>
 
-        <!-- Column B: "Check Before You Buy" Simulator (Livia feature) -->
-        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-            <div>
-                <div class="flex items-center space-x-2">
-                    <span class="text-lg">🛒</span>
-                    <h3 class="text-base font-bold text-slate-800">Check Before You Buy</h3>
+        <!-- Column B: "Check Before You Buy" Simulator (Instant, persistent, luxury) -->
+        <div class="bg-livia-surface p-5 sm:p-6 rounded-3xl border border-livia-border shadow-md space-y-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-base font-bold text-livia-textPrimary flex items-center space-x-2">
+                        <span>🛒</span>
+                        <span>Check Before You Buy</span>
+                    </h3>
+                    <p class="text-xs text-livia-textSecondary mt-0.5">
+                        Test whether you can afford a purchase right now without touching protected reserves.
+                    </p>
                 </div>
-                <p class="text-xs text-slate-500 mt-0.5">Considering a purchase? Test whether you can afford it without touching protected reserves.</p>
+                {% if simulation %}
+                <a href="{% url 'clear_simulation' %}" class="text-[11px] text-livia-textMuted hover:text-livia-gold transition underline">
+                    Clear Result
+                </a>
+                {% endif %}
             </div>
 
-            <form method="POST" class="space-y-3 text-xs">
+            <!-- Simulation Input Form -->
+            <form method="POST" id="simForm" class="space-y-3 text-xs">
                 {% csrf_token %}
                 <input type="hidden" name="check_buy" value="1">
                 <div>
-                    <label class="block font-semibold text-slate-700 mb-1">What are you planning to buy?</label>
-                    <input type="text" name="item_name" placeholder="e.g. Headphones, Dinner party, Shoes" required
-                           class="w-full border border-slate-300 rounded-lg p-2 text-sm">
+                    <label class="block font-semibold text-livia-textSecondary mb-1">What are you planning to buy?</label>
+                    <input type="text" id="simItemName" name="item_name" value="{{ simulation.item_name|default:'' }}" placeholder="e.g. Headphones, Dinner party, Shoes" required
+                           class="w-full bg-livia-elevated border border-livia-border rounded-xl p-2.5 text-sm text-livia-textPrimary placeholder:text-livia-textMuted focus:outline-none focus:border-livia-gold">
                 </div>
                 <div>
-                    <label class="block font-semibold text-slate-700 mb-1">Item Cost (₹)</label>
-                    <input type="number" step="0.01" name="item_cost" placeholder="e.g. 2500.00" required
-                           class="w-full border border-slate-300 rounded-lg p-2 text-sm font-semibold">
+                    <label class="block font-semibold text-livia-textSecondary mb-1">Item Cost (₹)</label>
+                    <input type="number" step="0.01" id="simItemCost" name="item_cost" value="{{ simulation.item_cost|default:'' }}" placeholder="e.g. 2500.00" required
+                           class="w-full bg-livia-elevated border border-livia-border rounded-xl p-2.5 text-sm text-livia-textPrimary font-mono font-semibold placeholder:text-livia-textMuted focus:outline-none focus:border-livia-gold">
                 </div>
-                <button type="submit" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl shadow-sm transition">
+                <button type="submit" class="w-full py-3 bg-livia-elevated hover:bg-livia-border text-livia-textPrimary border border-livia-border font-bold text-xs rounded-xl shadow-sm transition hover:border-livia-gold/40">
                     Simulate Purchase Impact &rarr;
                 </button>
             </form>
 
-            <!-- Simulation Result Box -->
+            <!-- PERSISTENT RESULT BOX (Does not disappear!) -->
             {% if simulation %}
-            <div class="p-3.5 rounded-xl border text-xs space-y-1 
-                {% if simulation.can_afford %}bg-emerald-50 border-emerald-200 text-emerald-900
-                {% else %}bg-rose-50 border-rose-200 text-rose-900{% endif %}">
-                <p class="font-bold text-sm">
-                    {% if simulation.can_afford %}✅ Purchase Approved (Within Budget){% else %}⛔ High Risk Warning{% endif %}
-                </p>
-                <p class="leading-relaxed">{{ simulation.explanation }}</p>
+            <div class="p-4 rounded-2xl border text-xs space-y-1.5 transition
+                {% if simulation.can_afford %}bg-emerald-950/20 border-emerald-700/50 text-emerald-200
+                {% else %}bg-rose-950/30 border-rose-800/60 text-rose-200{% endif %}">
+                <div class="flex items-center justify-between">
+                    <p class="font-black text-sm flex items-center space-x-1.5">
+                        <span>{% if simulation.can_afford %}✅ Purchase Approved{% else %}⛔ High Risk Warning{% endif %}</span>
+                    </p>
+                    <span class="text-[10px] font-mono opacity-70">₹{{ simulation.item_cost }}</span>
+                </div>
+                <p class="leading-relaxed text-xs opacity-95">{{ simulation.explanation }}</p>
                 {% if simulation.can_afford and simulation.daily_drop %}
-                <p class="pt-1 text-[11px] opacity-80">
-                    Daily budget impact: Drops by ₹{{ simulation.daily_drop }} per day.
-                </p>
+                <div class="pt-2 border-t border-emerald-800/30 flex justify-between text-[11px] font-semibold">
+                    <span>Adjusted Daily STS: <strong class="text-white font-mono">₹{{ simulation.new_daily_sts }}</strong></span>
+                    <span class="text-emerald-400">(-₹{{ simulation.daily_drop }}/day)</span>
+                </div>
                 {% endif %}
             </div>
             {% endif %}
@@ -211,42 +345,46 @@
 
     </div>
 
-    <!-- THE PROTECTION RESERVOIR (How the formula works) -->
-    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+    <!-- THE MONEY RESERVOIR BREAKDOWN (How the formula works) -->
+    <div class="bg-livia-surface p-6 rounded-3xl border border-livia-border shadow-md space-y-4">
         <div>
-            <h3 class="text-base font-bold text-slate-800">The Money Reservoir: How Safe-To-Spend is Calculated</h3>
-            <p class="text-xs text-slate-500">Transparent mathematical breakdown based on your active bank balance and locked pools.</p>
+            <h3 class="text-xs font-bold text-livia-gold uppercase tracking-wider">
+                The Money Reservoir &bull; How Safe-To-Spend is Calculated
+            </h3>
+            <p class="text-xs text-livia-textSecondary mt-0.5">
+                Deterministic mathematical breakdown from gross liquid balance down to daily safe spend.
+            </p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-5 gap-3 text-center text-xs">
-            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                <p class="text-slate-400 font-medium">1. Bank Balance</p>
-                <p class="text-base font-black text-slate-800 mt-1">₹{{ sts.available_balance }}</p>
-                <p class="text-[10px] text-slate-400 mt-1">Total liquid money</p>
+            <div class="p-4 bg-livia-elevated rounded-2xl border border-livia-border space-y-1">
+                <p class="text-livia-textMuted text-[11px] font-semibold">1. Bank Balance</p>
+                <p class="text-base font-black text-livia-textPrimary font-mono">₹{{ sts.available_balance }}</p>
+                <p class="text-[10px] text-livia-textMuted">Gross liquid money</p>
             </div>
 
-            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                <p class="text-rose-600 font-medium">2. Less: Unpaid Fixed</p>
-                <p class="text-base font-black text-rose-600 mt-1">-₹{{ sts.unpaid_rent|add:sts.unpaid_emi }}</p>
-                <p class="text-[10px] text-slate-400 mt-1">Rent + EMI obligations</p>
+            <div class="p-4 bg-livia-elevated rounded-2xl border border-livia-border space-y-1">
+                <p class="text-rose-400 text-[11px] font-semibold">2. Less: Unpaid Fixed</p>
+                <p class="text-base font-black text-rose-400 font-mono">-₹{{ sts.unpaid_rent|add:sts.unpaid_emi }}</p>
+                <p class="text-[10px] text-livia-textMuted">Rent & EMI reserved</p>
             </div>
 
-            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                <p class="text-amber-600 font-medium">3. Less: Protected Pools</p>
-                <p class="text-base font-black text-amber-600 mt-1">-₹{{ sts.emergency_alloc|add:sts.savings_alloc|add:sts.goal_contribution }}</p>
-                <p class="text-[10px] text-slate-400 mt-1">Emergency, Savings & Goal</p>
+            <div class="p-4 bg-livia-elevated rounded-2xl border border-livia-border space-y-1">
+                <p class="text-amber-400 text-[11px] font-semibold">3. Less: Protected</p>
+                <p class="text-base font-black text-amber-400 font-mono">-₹{{ sts.emergency_alloc|add:sts.savings_alloc|add:sts.goal_contribution }}</p>
+                <p class="text-[10px] text-livia-textMuted">Emergency & Savings</p>
             </div>
 
-            <div class="p-3 bg-indigo-50 rounded-xl border border-indigo-200">
-                <p class="text-indigo-800 font-bold">4. Spendable Pool</p>
-                <p class="text-base font-black text-indigo-700 mt-1">₹{{ sts.spendable_balance }}</p>
-                <p class="text-[10px] text-indigo-600 mt-1">Left to spend safely</p>
+            <div class="p-4 bg-livia-gold/10 rounded-2xl border border-livia-gold/30 space-y-1">
+                <p class="text-livia-gold text-[11px] font-semibold">4. Spendable Pool</p>
+                <p class="text-base font-black text-livia-gold font-mono">₹{{ sts.spendable_balance }}</p>
+                <p class="text-[10px] text-livia-textMuted">Liquid after shields</p>
             </div>
 
-            <div class="p-3 bg-emerald-50 rounded-xl border border-emerald-200">
-                <p class="text-emerald-800 font-bold">5. Daily Safe Spend</p>
-                <p class="text-base font-black text-emerald-700 mt-1">₹{{ sts.daily_sts }}</p>
-                <p class="text-[10px] text-emerald-600 mt-1">Spread over {{ sts.days_remaining }} days</p>
+            <div class="p-4 bg-emerald-950/30 rounded-2xl border border-emerald-700/50 space-y-1">
+                <p class="text-emerald-400 text-[11px] font-semibold">5. Daily Safe Spend</p>
+                <p class="text-base font-black text-emerald-300 font-mono">₹{{ sts.daily_sts }}</p>
+                <p class="text-[10px] text-emerald-400/70">Over {{ sts.days_remaining }} days</p>
             </div>
         </div>
     </div>

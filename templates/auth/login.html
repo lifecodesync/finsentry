@@ -1,35 +1,37 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="max-w-md mx-auto my-8">
-    <div class="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+<div class="max-w-md mx-auto my-10">
+    <div class="bg-livia-surface p-8 rounded-3xl border border-livia-border shadow-2xl space-y-6">
         <div class="text-center space-y-1">
-            <div class="text-4xl mb-2">🔐</div>
-            <h1 class="text-2xl font-bold text-slate-800">Welcome Back</h1>
-            <p class="text-xs text-slate-500">Sign in to access your live Daily Safe-to-Spend runway</p>
+            <div class="w-12 h-12 mx-auto rounded-2xl bg-livia-gold/10 border border-livia-gold/30 flex items-center justify-center text-xl text-livia-gold font-bold mb-3">
+                🔐
+            </div>
+            <h1 class="text-2xl font-black text-livia-textPrimary tracking-tight">Welcome Back</h1>
+            <p class="text-xs text-livia-textSecondary">Sign in to access your daily Safe-To-Spend runway</p>
         </div>
 
         <form method="POST" class="space-y-4 text-xs">
             {% csrf_token %}
             <div>
-                <label class="block font-semibold text-slate-700 mb-1">Username</label>
-                <input type="text" name="username" required placeholder="Enter username"
-                       class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <label class="block font-semibold text-livia-textSecondary mb-1.5">Username</label>
+                <input type="text" name="username" required placeholder="Enter your username"
+                       class="w-full bg-livia-elevated border border-livia-border rounded-xl p-3 text-sm text-livia-textPrimary placeholder:text-livia-textMuted focus:outline-none focus:border-livia-gold">
             </div>
 
             <div>
-                <label class="block font-semibold text-slate-700 mb-1">Password</label>
-                <input type="password" name="password" required placeholder="Enter password"
-                       class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <label class="block font-semibold text-livia-textSecondary mb-1.5">Password</label>
+                <input type="password" name="password" required placeholder="Enter your password"
+                       class="w-full bg-livia-elevated border border-livia-border rounded-xl p-3 text-sm text-livia-textPrimary placeholder:text-livia-textMuted focus:outline-none focus:border-livia-gold">
             </div>
 
-            <button type="submit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl shadow-md transition">
+            <button type="submit" class="w-full py-3.5 bg-livia-gold hover:bg-livia-goldHover text-black font-extrabold text-sm rounded-xl shadow-lg transition mt-2">
                 Sign In to Dashboard &rarr;
             </button>
         </form>
 
-        <div class="pt-4 border-t border-slate-100 text-center text-xs text-slate-500 space-y-2">
-            <p>New to FinSentry? <a href="{% url 'register' %}" class="text-indigo-600 font-bold hover:underline">Create an account</a></p>
+        <div class="pt-4 border-t border-livia-border text-center text-xs text-livia-textSecondary space-y-2">
+            <p>New to FinSentry? <a href="{% url 'register' %}" class="text-livia-gold font-bold hover:underline">Create an account</a></p>
         </div>
     </div>
 </div>

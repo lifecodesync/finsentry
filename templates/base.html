@@ -1,55 +1,127 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}FinSentry STS — Daily Safe-to-Spend Guard{% endblock %}</title>
+    <title>{% block title %}FinSentry STS — Safe-To-Spend Runway Guard{% endblock %}</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    colors: {
+                        livia: {
+                            bg: '#0B0B0A',
+                            surface: '#141411',
+                            elevated: '#191815',
+                            border: '#2B2620',
+                            gold: '#C6A86A',
+                            goldHover: '#D8BC7E',
+                            emerald: '#2E8B68',
+                            sapphire: '#4169A1',
+                            jade: '#4F9D78',
+                            garnet: '#B04A4A',
+                            oxblood: '#9E3F3F',
+                            textPrimary: '#F2EFE8',
+                            textSecondary: '#969289',
+                            textMuted: '#625F58',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        body {
+            background-color: #0B0B0A;
+            color: #F2EFE8;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        /* Custom scrollbar for sleek fintech look */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0B0B0A;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2B2620;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #C6A86A;
+        }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col">
+<body class="bg-livia-bg text-livia-textPrimary min-h-screen flex flex-col selection:bg-livia-gold selection:text-black">
 
     <!-- Top Navigation Header -->
-    <header class="bg-slate-900 text-white shadow-md border-b border-slate-800">
+    <header class="bg-livia-surface/80 backdrop-blur-md border-b border-livia-border sticky top-0 z-50">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
                 <!-- Brand / Logo -->
-                <a href="{% url 'dashboard' %}" class="flex items-center space-x-3">
-                    <span class="text-2xl font-black text-indigo-400">🛡️ FinSentry</span>
-                    <span class="text-[11px] bg-indigo-950 text-indigo-300 border border-indigo-700/50 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
-                        Safe-To-Spend
-                    </span>
+                <a href="{% url 'dashboard' %}" class="flex items-center space-x-3 group">
+                    <div class="w-9 h-9 rounded-xl bg-livia-gold/10 border border-livia-gold/30 flex items-center justify-center text-livia-gold font-black text-lg group-hover:scale-105 transition">
+                        🛡️
+                    </div>
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-base font-extrabold tracking-tight text-livia-textPrimary">FinSentry</span>
+                            <span class="text-[10px] bg-livia-gold/15 text-livia-gold border border-livia-gold/30 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                                Safe-To-Spend
+                            </span>
+                        </div>
+                        <p class="text-[10px] text-livia-textMuted tracking-wide">Predictive Financial Runway</p>
+                    </div>
                 </a>
 
                 <!-- Nav Links -->
-                <nav class="flex items-center space-x-2 sm:space-x-4 text-xs font-semibold">
+                <nav class="flex items-center space-x-2 sm:space-x-3 text-xs font-semibold">
                     {% if user.is_authenticated %}
-                        <a href="{% url 'dashboard' %}" class="px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-200 hover:text-white transition">Dashboard</a>
-                        <a href="{% url 'profile_setup' %}" class="px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-200 hover:text-white transition">⚙️ Financial Setup</a>
-                        <div class="h-4 w-px bg-slate-700 mx-1"></div>
-                        <span class="text-slate-400 hidden sm:inline">👤 {{ user.username }}</span>
-                        <a href="{% url 'logout' %}" class="px-3 py-1.5 bg-rose-600/90 hover:bg-rose-600 text-white rounded-lg transition">Logout</a>
+                        <a href="{% url 'dashboard' %}" class="px-3.5 py-2 rounded-xl text-livia-textSecondary hover:text-livia-textPrimary hover:bg-livia-elevated transition">
+                            Dashboard
+                        </a>
+                        <a href="{% url 'profile_setup' %}" class="px-3.5 py-2 rounded-xl text-livia-textSecondary hover:text-livia-textPrimary hover:bg-livia-elevated transition flex items-center space-x-1.5">
+                            <span>⚙️</span>
+                            <span>Financial Setup</span>
+                        </a>
+                        <div class="h-4 w-px bg-livia-border mx-1"></div>
+                        <span class="text-livia-textMuted hidden sm:inline font-medium">@{{ user.username }}</span>
+                        <a href="{% url 'logout' %}" class="px-3 py-1.5 bg-livia-elevated hover:bg-livia-garnet/20 text-livia-textSecondary hover:text-rose-300 border border-livia-border hover:border-livia-garnet/40 rounded-xl transition text-[11px]">
+                            Logout
+                        </a>
                     {% else %}
-                        <a href="{% url 'login' %}" class="px-3 py-2 rounded-lg hover:bg-slate-800 text-slate-200 hover:text-white transition">Login</a>
-                        <a href="{% url 'register' %}" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition shadow-sm font-bold">Sign Up</a>
+                        <a href="{% url 'login' %}" class="px-3.5 py-2 rounded-xl text-livia-textSecondary hover:text-livia-textPrimary hover:bg-livia-elevated transition">
+                            Login
+                        </a>
+                        <a href="{% url 'register' %}" class="px-4 py-2 bg-livia-gold hover:bg-livia-goldHover text-black rounded-xl font-bold transition shadow-sm">
+                            Sign Up
+                        </a>
                     {% endif %}
                 </nav>
             </div>
         </div>
     </header>
 
-    <!-- Global Alert Messages -->
+    <!-- Global Flash Notification Messages -->
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 w-full">
         {% if messages %}
             {% for message in messages %}
-                <div class="p-3.5 mb-3 rounded-xl text-xs font-medium flex items-center justify-between shadow-sm
-                    {% if message.tags == 'success' %}bg-emerald-50 text-emerald-800 border border-emerald-200
-                    {% elif message.tags == 'error' %}bg-rose-50 text-rose-800 border border-rose-200
-                    {% else %}bg-indigo-50 text-indigo-800 border border-indigo-200{% endif %}">
+                <div class="p-3.5 mb-3 rounded-2xl text-xs font-medium flex items-center justify-between shadow-lg backdrop-blur-sm
+                    {% if message.tags == 'success' %}bg-livia-emerald/15 text-emerald-300 border border-livia-emerald/30
+                    {% elif message.tags == 'error' %}bg-livia-garnet/15 text-rose-300 border border-livia-garnet/30
+                    {% else %}bg-livia-sapphire/15 text-sky-300 border border-livia-sapphire/30{% endif %}">
                     <span>{{ message }}</span>
                 </div>
             {% endfor %}
@@ -62,10 +134,14 @@
     </main>
 
     <!-- Footer -->
-    <footer class="bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-500 mt-auto">
-        <div class="max-w-6xl mx-auto px-4">
-            <p class="font-bold text-slate-700">FinSentry Safe-To-Spend (STS) — Financial Runway & Daily Budget Engine</p>
-            <p class="mt-1">Architected with Python, Django 6, and SQLite. Zero Firebase. Zero external cloud leaks.</p>
+    <footer class="bg-livia-surface border-t border-livia-border py-6 text-center text-xs text-livia-textMuted mt-auto">
+        <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+            <p class="font-semibold text-livia-textSecondary">
+                FinSentry STS &bull; Powered by the Livia Financial Reservoir Formula
+            </p>
+            <p class="text-[11px]">
+                Built with Python & Django &bull; 100% Local SQLite Data Sovereignty
+            </p>
         </div>
     </footer>
 
